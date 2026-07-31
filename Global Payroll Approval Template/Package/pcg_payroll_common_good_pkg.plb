@@ -79,6 +79,7 @@ Modifications:
 2024.08.02 - 8.0 - Bhuvi Chauhan - removing LDAP and using PAAS (MD_EMPLOYEES table).
 2024.12.19 - 8.1 - Bhuvi Chauhan - Included get_reporting_mail function in this package created by Rohit Kumar
 2025.03.11 - 8.2 - Bhuvi Chauhan - Added fix_temp_entity_folders
+2026.07.31 - 8.3 - Pragya Kapoor - Remove dependency of LDAP
 */
  
 -- TODO: get_manager: caching null values also? review the LDAP cache timeout also?
@@ -423,6 +424,7 @@ function email2name(p_email varchar2 default v('APP_USER')) return varchar2 dete
 2018.03.29 - 1.3 - András Tóth - cache forget is not necessary any more
 2020.05.15 - 1.4 - András Tóth - LDAP access method change
 2024.08.02 - 1.5 - Bhuvi Chauhan - removing LDAP and using PAAS (MD_EMPLOYEES table).
+2026.07.31 - 1.6 - Pragya Kapoor - remove LDAP and use email address to find the name
 */
   c_proc_version constant varchar2(5 char) := '1.5';
   c_proc_name constant varchar2(30 char) := 'email2name';
@@ -436,24 +438,24 @@ begin
  
   -- cache failed:
   if v_name is null then
-    begin -- LDAP Querry
-      SELECT
-      max(val) into v_name
-      FROM
-      TABLE
-        ( apex_ldap.search(
-          p_host => c_ldap_host,
-          p_username => c_ldap_username,
-          p_pass => c_ldap_key,
-          p_port => c_ldap_port,
-          p_use_ssl => c_ldap_use_ssl,
-          p_search_base=>c_ldap_search_base,
-          p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
-          p_attribute_names => 'displayname'
-          )
-        );
-    exception when DBMS_LDAP.general_error then null;
-    end;
+    -- begin -- LDAP Querry
+    --   SELECT
+    --   max(val) into v_name
+    --   FROM
+    --   TABLE
+    --     ( apex_ldap.search(
+    --       p_host => c_ldap_host,
+    --       p_username => c_ldap_username,
+    --       p_pass => c_ldap_key,
+    --       p_port => c_ldap_port,
+    --       p_use_ssl => c_ldap_use_ssl,
+    --       p_search_base=>c_ldap_search_base,
+    --       p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
+    --       p_attribute_names => 'displayname'
+    --       )
+    --     );
+    -- exception when DBMS_LDAP.general_error then null;
+    -- end;
     -- LDAP/Hand-made name from corporate email address:
     v_out := nvl(trim(v_name),initcap(replace(replace(replace(replace(upper(trim(p_email)),'@ORACLE.COM',''),'.',' '),'_',' '),'-',' ')) );
     -- put to the cash (empty old values if exists)
@@ -1675,6 +1677,7 @@ function get_uid (p_email varchar2 default v('APP_USER')) return varchar2 determ
 2018.02.05 - 1.0 - András Tóth - create
 2018.03.29 - 1.1 - András Tóth - cache forget is not necessary any more
 2020.05.15 - 1.2 - András Tóth - LDAP Access Methods change
+2026.07.31 - 1.3 - Pragya Kapoor - Remove dependency of LDAP; use MD_EMPLOYEES
 */
   c_proc_name constant varchar2(61 char) := 'get_uid';
   c_proc_version constant varchar2(5 char) := '1.2';
@@ -1689,18 +1692,19 @@ begin
     if v_uid is not null then return v_uid;
     -- cache fail
     else
- 
-      SELECT trim(upper(val)) into v_uid FROM TABLE (
-            apex_ldap.search(
-            p_host => c_ldap_host,
-            p_username => c_ldap_username,
-            p_pass => c_ldap_key,
-            p_port => c_ldap_port,
-            p_use_ssl => c_ldap_use_ssl,
-            p_search_base=>c_ldap_search_base,
-            p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
-            p_attribute_names => 'uid')
-            );
+        SELECT UPPER(TRIM(GUID)) into v_uid  
+        FROM MD_EMPLOYEES WHERE UPPER(EMP_EMAIL_ADDRESS) = UPPER(p_email);
+    --   SELECT trim(upper(val)) into v_uid FROM TABLE (
+    --         apex_ldap.search(
+    --         p_host => c_ldap_host,
+    --         p_username => c_ldap_username,
+    --         p_pass => c_ldap_key,
+    --         p_port => c_ldap_port,
+    --         p_use_ssl => c_ldap_use_ssl,
+    --         p_search_base=>c_ldap_search_base,
+    --         p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
+    --         p_attribute_names => 'uid')
+    --         );
  
       -- put to cache, (empty old cache data)
       cache_put_s(c_hv,p_email,v_uid);
@@ -1720,6 +1724,7 @@ function get_title(p_email varchar2 default v('APP_USER')) return varchar2 deter
 2018.02.05 - 1.1 - András Tóth - adding cache
 2018.03.29 - 1.2 - András Tóth - cache forget is not necessary any more
 2020.05.15 - 1.3 - András Tóth - LDAP Access Method chagne
+2026.07.31 - 1.4 - Pragya Kapoor - Remove dependency of LDAP; use MD_EMPLOYEES
 */
   c_proc_name constant varchar2(61 char) := 'get_title';
   c_proc_version constant varchar2(5 char) := '1.3';
@@ -1729,17 +1734,19 @@ begin
   if trim(p_email) is null then return null; end if;
   v_tmp := cache_get_s(c_hv,p_email,sysdate-c_cache_ldap_expire_days);
   if v_tmp is not null then return v_tmp; end if;
-  SELECT max(val) into v_tmp FROM TABLE (
-        apex_ldap.search(
-        p_host => c_ldap_host,
-        p_username => c_ldap_username,
-        p_pass => c_ldap_key,
-        p_port => c_ldap_port,
-        p_use_ssl => c_ldap_use_ssl,
-        p_search_base=>c_ldap_search_base,
-        p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
-        p_attribute_names => 'title')
-        );
+    SELECT UPPER(TRIM(JOB_TITLE)) into v_tmp  
+        FROM MD_EMPLOYEES WHERE UPPER(EMP_EMAIL_ADDRESS) = UPPER(p_email);
+--   SELECT max(val) into v_tmp FROM TABLE (
+--         apex_ldap.search(
+--         p_host => c_ldap_host,
+--         p_username => c_ldap_username,
+--         p_pass => c_ldap_key,
+--         p_port => c_ldap_port,
+--         p_use_ssl => c_ldap_use_ssl,
+--         p_search_base=>c_ldap_search_base,
+--         p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
+--         p_attribute_names => 'title')
+--         );
   cache_put_s(c_hv,p_email,v_tmp);
   return v_tmp;
 exception
@@ -1805,21 +1812,22 @@ begin
   if trim(p_email) is null then return null; end if;
   v_tmp := cache_get_s(c_hv,p_email,sysdate-c_cache_ldap_expire_days);
   if v_tmp is not null then return v_tmp; end if;
-  SELECT max(val) into v_tmp FROM TABLE (
-        apex_ldap.search(
-        p_host => c_ldap_host,
-        p_username => c_ldap_username,
-        p_pass => c_ldap_key,
-        p_port => c_ldap_port,
-        p_use_ssl => c_ldap_use_ssl,
-        p_search_base=>c_ldap_search_base,
-        p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
-        p_attribute_names => 'telephonenumber')
-        );
+  v_tmp := NULL;
+--   SELECT max(val) into v_tmp FROM TABLE (
+--         apex_ldap.search(
+--         p_host => c_ldap_host,
+--         p_username => c_ldap_username,
+--         p_pass => c_ldap_key,
+--         p_port => c_ldap_port,
+--         p_use_ssl => c_ldap_use_ssl,
+--         p_search_base=>c_ldap_search_base,
+--         p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
+--         p_attribute_names => 'telephonenumber')
+--         );
   cache_put_s(c_hv,p_email,v_tmp);
   return v_tmp;
 exception
-  when DBMS_LDAP.general_error then return null;
+--   when DBMS_LDAP.general_error then return null;
   when others then
   log($$PLSQL_UNIT||'.'||c_proc_name,c_version,c_proc_version,get_sqlerrm(sqlcode),sqlcode);
   if SQLCODE between -20999 and -20000 then raise_application_error(SQLCODE,get_SQLERRM(SQLCODE)); else raise; end if;
@@ -1880,26 +1888,56 @@ function get_timezone(p_email varchar2 default v('APP_USER')) return varchar2 de
 2018.02.05 - 1.1 - András Tóth - adding cache
 2018.03.29 - 1.2 - András Tóth - cache forget is not necessary any more
 2020.05.15 - 1.3 - András Tóth - LDAP acccess method changes
+2026.07.31 - 1.4 - Pragya Kapoor - Remove dependency of LDAP
 */
   c_proc_name constant varchar2(61 char) := 'get_timezone';
   c_proc_version constant varchar2(5 char) := '1.3';
   v_tmp  varchar2(32767 char);
+  v_location_id VARCHAR2(100);
+  l_clob      CLOB;
+  l_clob_time CLOB;
   c_hv number :=  2501141355/*ORA_HASH('get_timezone')*/;
 begin
   if trim(p_email) is null then return null; end if;
   v_tmp := cache_get_s(c_hv,p_email,sysdate-c_cache_ldap_expire_days);
   if v_tmp is not null then return v_tmp; end if;
-  SELECT max(val) into v_tmp FROM TABLE (
-        apex_ldap.search(
-        p_host => c_ldap_host,
-        p_username => c_ldap_username,
-        p_pass => c_ldap_key,
-        p_port => c_ldap_port,
-        p_use_ssl => c_ldap_use_ssl,
-        p_search_base=>c_ldap_search_base,
-        p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
-        p_attribute_names => 'orcltimezone')
+    l_clob := apex_web_service.make_rest_request
+        ( p_url => 'https://gxpap.oracle.com/oracle/oal/hcm/hrsecureview/hrdataservice/hrdata/hractivedataservice?emailAddress='|| lower(p_email)
+        , p_http_method => 'GET'
+        , p_credential_static_id => 'hr_paas_cred'
         );
+    -- dbms_output.put_line(l_clob);        
+    SELECT json_value(
+         l_clob,
+         '$.data[0].locationId'
+         RETURNING NUMBER
+       ) AS location_id into v_location_id
+    FROM dual;
+    dbms_output.put_line(v_location_id);     
+    
+    l_clob_time := apex_web_service.make_rest_request
+        ( p_url => 'https://gxpap.oracle.com/oracle/oal/hcm/hrsecureview/hrdataservice/hrdata/hrlocationservice?locationId='|| v_location_id
+        , p_http_method => 'GET'
+        , p_credential_static_id => 'hr_paas_cred'
+        );
+    -- dbms_output.put_line(l_clob_time);   
+    SELECT json_value(
+         l_clob_time,
+         '$.data[0].timezoneCode'
+         RETURNING VARCHAR2(100)
+       ) AS timezoneCode into v_tmp
+    FROM dual;
+--   SELECT max(val) into v_tmp FROM TABLE (
+--         apex_ldap.search(
+--         p_host => c_ldap_host,
+--         p_username => c_ldap_username,
+--         p_pass => c_ldap_key,
+--         p_port => c_ldap_port,
+--         p_use_ssl => c_ldap_use_ssl,
+--         p_search_base=>c_ldap_search_base,
+--         p_search_filter=>'mail='||apex_escape.ldap_search_filter(trim(p_email)),
+--         p_attribute_names => 'orcltimezone')
+--         );
    cache_put_s(c_hv,p_email,v_tmp);
    return v_tmp;
 exception
