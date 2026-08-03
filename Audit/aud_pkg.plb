@@ -1,6 +1,9 @@
 create or replace package body "AUD_PKG" as
-
-c_pkg_version constant varchar2(5 char) := '1';
+/**
+2016.01.11 - 1.0 - Rohit Kumar - create package
+2026.08.03 - 1.1 - Pragya Kapoor - Modify the logic for get_director_id. Use pivot instead of nested loop
+**/
+c_pkg_version constant varchar2(5 char) := '1.1';
 c_pkg_name constant varchar2(30 char) := 'AUD_PKG';
 
 
@@ -258,68 +261,105 @@ WHEN OTHERS THEN
 END upload_user_roles_ivacation;
 
 --- as per new config design 
-FUNCTION get_director_id(p_emp_email VARCHAR2) 
-RETURN Number 
-IS
-    v_director_id number;
+FUNCTION get_director_id(p_emp_email VARCHAR2) RETURN Number IS
+/**2026.07.31 - 1.6 - Pragya Kapoor - Modify the logic for get_director_id. Use pivot instead of nested loop
+**/
+  c_proc_version constant varchar2(5 char) := '1.1';
+  v_director_id number;
 BEGIN
-    FOR rec IN (
-        SELECT 
-            UPPER(M.MANAGER_01_EMAIL_ADDRESS) AS MANAGER_01_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_02_EMAIL_ADDRESS) AS MANAGER_02_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_03_EMAIL_ADDRESS) AS MANAGER_03_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_04_EMAIL_ADDRESS) AS MANAGER_04_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_05_EMAIL_ADDRESS) AS MANAGER_05_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_06_EMAIL_ADDRESS) AS MANAGER_06_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_07_EMAIL_ADDRESS) AS MANAGER_07_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_08_EMAIL_ADDRESS) AS MANAGER_08_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_09_EMAIL_ADDRESS) AS MANAGER_09_EMAIL_ADDRESS,
-            UPPER(M.MANAGER_10_EMAIL_ADDRESS) AS MANAGER_10_EMAIL_ADDRESS
-        FROM MD_EMPLOYEES M
-        WHERE UPPER(M.EMP_EMAIL_ADDRESS) = UPPER(p_emp_email)
-    ) LOOP
-        FOR i IN 1..10 LOOP
-            BEGIN
+    SELECT d.id into v_director_id       
+    FROM (
+        SELECT EMP_EMAIL_ADDRESS,
+               MANAGER_01_EMAIL_ADDRESS,
+               MANAGER_02_EMAIL_ADDRESS,
+               MANAGER_03_EMAIL_ADDRESS,
+               MANAGER_04_EMAIL_ADDRESS,
+               MANAGER_05_EMAIL_ADDRESS,
+               MANAGER_06_EMAIL_ADDRESS,
+               MANAGER_07_EMAIL_ADDRESS,
+               MANAGER_08_EMAIL_ADDRESS,
+               MANAGER_09_EMAIL_ADDRESS,
+               MANAGER_10_EMAIL_ADDRESS
+        FROM MD_EMPLOYEES
+    )
+    UNPIVOT (
+        MANAGERS FOR MANAGER_NO IN (
+            MANAGER_01_EMAIL_ADDRESS AS 1,
+            MANAGER_02_EMAIL_ADDRESS AS 2,
+            MANAGER_03_EMAIL_ADDRESS AS 3,
+            MANAGER_04_EMAIL_ADDRESS AS 4,
+            MANAGER_05_EMAIL_ADDRESS AS 5,
+            MANAGER_06_EMAIL_ADDRESS AS 6,
+            MANAGER_07_EMAIL_ADDRESS AS 7,
+            MANAGER_08_EMAIL_ADDRESS AS 8,
+            MANAGER_09_EMAIL_ADDRESS AS 9,
+            MANAGER_10_EMAIL_ADDRESS AS 10
+        )
+    )
+    INNER JOIN AUD_DIRECTOR D ON UPPER(D.DIRECTOR) = UPPER(MANAGERS)
+    WHERE UPPER(EMP_EMAIL_ADDRESS) = UPPER(p_emp_email)
+    AND ROWNUM=1;
+    dbms_output.put_line(v_director_id);
+    RETURN v_director_id;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RETURN -1;  
+    -- FOR rec IN (
+    --     SELECT 
+    --         UPPER(M.MANAGER_01_EMAIL_ADDRESS) AS MANAGER_01_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_02_EMAIL_ADDRESS) AS MANAGER_02_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_03_EMAIL_ADDRESS) AS MANAGER_03_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_04_EMAIL_ADDRESS) AS MANAGER_04_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_05_EMAIL_ADDRESS) AS MANAGER_05_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_06_EMAIL_ADDRESS) AS MANAGER_06_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_07_EMAIL_ADDRESS) AS MANAGER_07_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_08_EMAIL_ADDRESS) AS MANAGER_08_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_09_EMAIL_ADDRESS) AS MANAGER_09_EMAIL_ADDRESS,
+    --         UPPER(M.MANAGER_10_EMAIL_ADDRESS) AS MANAGER_10_EMAIL_ADDRESS
+    --     FROM MD_EMPLOYEES M
+    --     WHERE UPPER(M.EMP_EMAIL_ADDRESS) = UPPER(p_emp_email)
+    -- ) LOOP
+    --     FOR i IN 1..10 LOOP
+    --         BEGIN
                 
-                v_director_id := NULL;
+    --             v_director_id := NULL;
 
                 
-                EXECUTE IMMEDIATE 
-                    'SELECT ID 
-                     FROM AUD_DIRECTOR  
+    --             EXECUTE IMMEDIATE 
+    --                 'SELECT ID 
+    --                  FROM AUD_DIRECTOR  
                     
-                    WHERE 
-                       UPPER(:manager_email) = UPPER(DIRECTOR)' 
-                INTO v_director_id
-                USING CASE i 
-                       WHEN 1 THEN rec.MANAGER_01_EMAIL_ADDRESS
-                       WHEN 2 THEN rec.MANAGER_02_EMAIL_ADDRESS
-                       WHEN 3 THEN rec.MANAGER_03_EMAIL_ADDRESS
-                       WHEN 4 THEN rec.MANAGER_04_EMAIL_ADDRESS
-                       WHEN 5 THEN rec.MANAGER_05_EMAIL_ADDRESS
-                       WHEN 6 THEN rec.MANAGER_06_EMAIL_ADDRESS
-                       WHEN 7 THEN rec.MANAGER_07_EMAIL_ADDRESS
-                       WHEN 8 THEN rec.MANAGER_08_EMAIL_ADDRESS
-                       WHEN 9 THEN rec.MANAGER_09_EMAIL_ADDRESS
-                       WHEN 10 THEN rec.MANAGER_10_EMAIL_ADDRESS
-                     END;
+    --                 WHERE 
+    --                    UPPER(:manager_email) = UPPER(DIRECTOR)' 
+    --             INTO v_director_id
+    --             USING CASE i 
+    --                    WHEN 1 THEN rec.MANAGER_01_EMAIL_ADDRESS
+    --                    WHEN 2 THEN rec.MANAGER_02_EMAIL_ADDRESS
+    --                    WHEN 3 THEN rec.MANAGER_03_EMAIL_ADDRESS
+    --                    WHEN 4 THEN rec.MANAGER_04_EMAIL_ADDRESS
+    --                    WHEN 5 THEN rec.MANAGER_05_EMAIL_ADDRESS
+    --                    WHEN 6 THEN rec.MANAGER_06_EMAIL_ADDRESS
+    --                    WHEN 7 THEN rec.MANAGER_07_EMAIL_ADDRESS
+    --                    WHEN 8 THEN rec.MANAGER_08_EMAIL_ADDRESS
+    --                    WHEN 9 THEN rec.MANAGER_09_EMAIL_ADDRESS
+    --                    WHEN 10 THEN rec.MANAGER_10_EMAIL_ADDRESS
+    --                  END;
 
                 
-                IF v_director_id IS NOT NULL THEN
-                    RETURN v_director_id;
-                END IF;
+    --             IF v_director_id IS NOT NULL THEN
+    --                 RETURN v_director_id;
+    --             END IF;
 
-            EXCEPTION
-                WHEN NO_DATA_FOUND THEN
-                    NULL;  
-                WHEN OTHERS THEN
-                    dbms_output.put_line('Error for manager ' || i || ': ' || SQLERRM);
-            END;
-        END LOOP;
-    END LOOP;
+    --         EXCEPTION
+    --             WHEN NO_DATA_FOUND THEN
+    --                 NULL;  
+    --             WHEN OTHERS THEN
+    --                 dbms_output.put_line('Error for manager ' || i || ': ' || SQLERRM);
+    --         END;
+    --     END LOOP;
+    -- END LOOP;
 
-    -- If no director is found, return -1
-    RETURN -1;
+    -- -- If no director is found, return -1
+    -- RETURN -1;
 END get_director_id;
 
 
