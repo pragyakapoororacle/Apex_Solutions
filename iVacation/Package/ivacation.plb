@@ -1,5 +1,5 @@
 create or replace PACKAGE BODY "IVACATION" as 
-  c_pkg_version constant varchar2(5 char) := '1.0';
+  c_pkg_version constant varchar2(5 char) := '1.1';
   c_pkg_name constant varchar2(30 char) := 'IVACATION';
  
   C_MANAGER_APPROVE_ID number := 1; 
@@ -28,6 +28,9 @@ create or replace PACKAGE BODY "IVACATION" as
 -- Description:     Returns a qualified link 
 -- 
 --***************************************** 
+/**
+2026.08.05 - 1.1 - Pragya Kapoor - Modify the logic for GET_AMOUNT_TO_ADD. Do not expire the carryover for employees in AA_EXEMPTED_EMP table
+**/
 function CONSTRUCT_LINK(P_PAGE_ID varchar2, P_CHECKSUM varchar2 default null, P_REQUEST varchar2 default null, P_SET_ARGS varchar2 default null) 
 return varchar2 
 is 
@@ -1001,6 +1004,9 @@ end GET_BEGIN_END_DATES;
 -- 
 --***************************************** 
 function GET_AMOUNT_TO_ADD(P_AA_OVERVIEW_ID number, P_NEW_LEAVE_BALANCE number) 
+/**
+2026.08.05 - 1.1 - Pragya Kapoor - Modify the logic for GET_AMOUNT_TO_ADD. Do not expire the carryover for employees in AA_EXEMPTED_EMP table
+**/
 return number 
 is 
  
@@ -1019,6 +1025,7 @@ is
   V_RETURN                AA_OVERVIEW.AMOUNT_ADDED%type; 
   V_AA_COUNTRY_VP_INT_ID  AA_OVERVIEW.AA_COUNTRY_VP_INT_ID%type; 
   V_EMP_EMAIL             AA_OVERVIEW.EMP_EMAIL%type; 
+  v_exempted_count        NUMBER;
  
 begin 
  
@@ -1089,6 +1096,8 @@ begin
                         ,P_AA_COUNTRY_VP_INT_ID => V_AA_COUNTRY_VP_INT_ID 
                         ,P_DATE => V_BEGIN_DATE 
                       ); 
+  SELECT COUNT(*) INTO v_exempted_count FROM AA_EXEMPTED_EMP
+   WHERE emp_email = V_EMP_EMAIL;                    
  bhu_logs(667,'log6667'||systimestamp,V_MAX_ENTITLEMENT||'-'||V_CURRENT_BALANCE||'-'||P_AA_OVERVIEW_ID ||'-'||P_NEW_LEAVE_BALANCE||' '||V_CUR_ENTITLEMENT||' '||V_MONTH||' '||V_ACCRUAL_EXPIRY_DATE);
   -- Accrual expiry date 
   if V_ACCRUAL_EXPIRY_DATE = V_MONTH  and V_MONTHLY_ACCRUAL = 0 then 
@@ -1097,7 +1106,11 @@ begin
     if V_CURRENT_BALANCE > V_CUR_ENTITLEMENT then -- The begin month of the employee 
     -- Remove the carryover 
     bhu_logs(668,'log668'||systimestamp,'V_CUR_ENTITLEMENT');
+    IF v_exempted_count > 0 THEN
+      V_RETURN := V_RATE_PER_MONTH;
+    ELSE
       V_RETURN := V_CUR_ENTITLEMENT - V_CURRENT_BALANCE; 
+    END IF;
     else 
     bhu_logs(669,'log669'||systimestamp,'V_RATE_PER_MONTH');
     -- Return the rate per month 
