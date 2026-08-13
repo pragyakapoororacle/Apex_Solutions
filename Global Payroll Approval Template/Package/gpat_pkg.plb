@@ -14,10 +14,13 @@ Modifications:
 2022.10.26 - 1.8 - Bhuvi Chauhan	  - fix for SR #63738, changes made in send_email_notification
 2023.07.27 - 1.9 - Bhuvi Chauhan      - updated send_email_notification procedure added p_gpat_or_gpt,p_gpt_batch_id,p_gpt_batch_source for GPT Enhancement
 2023.08.14 - 2.0 - Bhuvi Chauhan      - updated the link creation code for GPAT used the P_PLAI_URL parameter for GPAT also to overcome that javascrip link. SR#84961, Also included versions in the modifications history.
-2024.12.03 - 2.1 - Bhvui Chauhan      - Creating new procedure for Tax Calendar Initilization
+2025.04.22 - 2.1 - Bhuvi Chauhan      - For gpt source manual, corrected the enitiy,country allocation to the variables. 
+2025.06.25 - 2.2 - Bhuvi Chauhan - Made changes in the GPT Email body, added pay date, batch amount and batch name.
+2026.07.08 - 2.2 - Pragya Kapoor 	  - modify INIT_TAX_CALENDAR to run between from & to month of given year, region and country
+
 */
 
-c_version constant varchar2(5 char) := '2.1';
+c_version constant varchar2(5 char) := '2.2';
 
 procedure send_email_notification( p_gpat_id     number
                                  , p_req_action  varchar2
@@ -31,6 +34,8 @@ procedure send_email_notification( p_gpat_id     number
                                  ) as
 /** It sends email notification.
 2018.01.30 - 1.0 - Marek Szwarczewski - create
+2025.04.22 - 1.1 - Bhuvi Chauhan - For gpt source manual, corrected the enitiy,country allocation to the variables. 
+2025.06.25 - 1.2 - Bhuvi Chauhan - Made changes in the GPT Email body, added pay date, batch amount and batch name.
 */
    c_body_txt       CLOB ;
    c_body_html      CLOB ;
@@ -48,7 +53,7 @@ procedure send_email_notification( p_gpat_id     number
 BEGIN
 
  IF p_gpat_or_gpt = 'gpt' THEN
-
+    
     SELECT headline, TO_CHAR(batch_amount, '999G999G999G999G990D00') into v_batch_name, v_batch_amount from gpt_batch where id = p_gpt_batch_id;
     select to_char(min(pay_date),'DD-MON-YYYY') into v_pay_date from gpt_pay_elements_value where gpt_batch_id = p_gpt_batch_id;
 
@@ -56,8 +61,8 @@ BEGIN
      WHEN p_gpt_batch_source = 'G' THEN
 
    -- Pay date as text, Country name and Entity name
-   SELECT e.COUNTRY , e.ENTITY-- , to_char( g.PAY_DATE, 'DD-MON-YYYY' )
-     INTO v_country , v_entity--, v_pay_date
+   SELECT e.COUNTRY , e.ENTITY --, to_char( g.PAY_DATE, 'DD-MON-YYYY' )
+     INTO v_country , v_entity --, v_pay_date
      FROM GPAT_MAIN g
         , MD_ENTITIES_V e
        WHERE g.ID_GPAT    = p_gpat_id
@@ -66,7 +71,7 @@ BEGIN
      WHEN p_gpt_batch_source = 'M' THEN
 
       SELECT mev.entity, mev.country--, to_char(gb.BATCH_PAYMENT_DATE, 'DD-MON-YYYY' )
-        INTO v_country , v_entity --, v_pay_date
+        INTO v_entity, v_country --, v_pay_date -- made the fix here on 22 april 2025 by bhuvi entity was going into country and vice-versa 
       FROM gpt_batch gb, md_entities_v mev
        WHERE gb.id = p_gpt_batch_id
        AND gb.country_id = mev.country_id
@@ -250,7 +255,7 @@ BEGIN
             c_table:=c_table || '<tr><td>Pay date    </td>    <td><b>'  || v_pay_date  || '</b></td>    </tr>' || utl_tcp.crlf ;
             c_table:=c_table || '<tr><td>Batch Amount </td>   <td><b>'  || v_batch_amount  || '</b></td>    </tr>' || utl_tcp.crlf ;
             c_table:=c_table || '<tr><td>Batch Name   </td>   <td><b>'  || v_batch_name  || '</b></td>    </tr>' || utl_tcp.crlf ;
-            c_table:=c_table || '<tr><td>Link         </td>   <td>'     || v_link      ||     '</td>    </tr>' || utl_tcp.crlf ;
+            c_table:=c_table || '<tr><td>Link        </td>    <td>'     || v_link      ||     '</td>    </tr>' || utl_tcp.crlf ;
             c_table:=c_table || '</table>' ;   
 
     end case ;     
@@ -268,10 +273,9 @@ BEGIN
      FROM dual ;
    
    -- Sending email
-   apex_mail.send ( p_to        => 'bhuvi.chauhan@oracle.com'
-   --replace( p_send_to, ':', ',')
+   apex_mail.send ( p_to        => replace( p_send_to, ':', ',')
                   , p_cc        => replace( p_send_cc, ':', ',')
-               --   , p_bcc       => replace( p_send_bcc, ':', ',')
+                  , p_bcc       => replace( p_send_bcc, ':', ',')
                   , p_from      => v('APP_USER')
                   , p_subj      => v_subject
                   , p_body      => c_body_txt
@@ -382,16 +386,18 @@ begin
 end check_pay_vs_net ;
 
 ------------------------------------
+PROCEDURE INIT_TAX_CALENDAR(V_YEAR VARCHAR2, V_FROM_MONTH NUMBER, V_TO_MONTH NUMBER, V_REGION VARCHAR2, V_COUNTRY VARCHAR2) IS
+--2024.12.03 - 1.0 - Bhvui Chauhan 		-- create
+--2026.07.08 - 1.1 - Pragya Kapoor 		-- modify it to run between from & to month of given year, region and country
 
-PROCEDURE INIT_TAX_CALENDAR IS
   v_due_date       DATE;
   v_due_date_2     DATE; -- Second due date for semi-monthly events
   v_base_date      DATE;
   v_gpat_end_month DATE;
-  v_month_delay    NUMBER;
-  v_next_year      NUMBER := EXTRACT(YEAR FROM SYSDATE);
+  v_next_year      NUMBER := V_YEAR;--EXTRACT(YEAR FROM SYSDATE);
   v_exists         NUMBER;  -- To check for duplicate rows
-
+  v_start_date 	   DATE	:= TO_DATE(V_YEAR || '-' || V_FROM_MONTH ||  '-01', 'YYYY-MM-DD');
+  v_end_date 	   DATE := LAST_DAY(TO_DATE(V_YEAR || '-' || V_TO_MONTH ||  '-01', 'YYYY-MM-DD'));
   -- Cursor to iterate over active due date config (GTC_DUEDATE_DICT) joined with GPT_PAY_ELEMENTS_DICTIONARY
   CURSOR due_date_cursor IS
     SELECT d.ID,
@@ -411,8 +417,12 @@ PROCEDURE INIT_TAX_CALENDAR IS
     FROM GTC_DUEDATE_DICT d
     JOIN GPT_PAY_ELEMENTS_DICTIONARY e
       ON d.ID = e.LEGAL_DUE_DATE_ID
-    WHERE d.STATUS = 'ACTIVE';  -- Only process active configurations
+	INNER JOIN MD_COUNTRIES C ON C.id = E.COUNTRY_ID
+	WHERE UPPER(region) = DECODE(UPPER(v_region), 'ALL', UPPER(region), UPPER(v_region)) --Filter the regions
+    AND E.COUNTRY_ID = DECODE(V_COUNTRY, 'All', E.COUNTRY_ID , V_COUNTRY) --Filter the country
+    AND d.STATUS = 'ACTIVE';  -- Only process active configurations
 BEGIN
+  bhu_logs(100001, 'V_YEAR: ' || V_YEAR || ' V_FROM_MONTH: ' || V_FROM_MONTH || ' V_TO_MONTH: ' || V_TO_MONTH || ' V_REGION: ' || V_REGION || ' V_COUNTRY: ' || V_COUNTRY , 'clob100001');
   FOR due_date_rec IN due_date_cursor LOOP
 
     ----------------------------------------------------------------------------
@@ -435,6 +445,11 @@ BEGIN
           v_due_date_2 := LAST_DAY(v_due_date);
           bhu_logs(1002, 'v_due_date_2 ' || v_due_date_2, 'clob1002');
 
+		 --if due date is greater than to date then exit
+		EXIT WHEN v_due_date > v_end_date;
+		 --if due date is less than start date then skip that month
+		CONTINUE WHEN v_due_date < v_start_date;
+		
           -- Adjust the first due date for holidays/weekends.
           LOOP
             DECLARE
@@ -455,42 +470,42 @@ BEGIN
               END IF;
             END;
           END LOOP;
-
-          -- Insert first semi-monthly due date (15th or adjusted) if not already inserted.
-          BEGIN
-            SELECT COUNT(*) INTO v_exists FROM GTC_PAYMENTS
-             WHERE PAYEE_ID       = due_date_rec.PAYMENT_TYPE_ID
-               AND COUNTRY_ID     = due_date_rec.COUNTRY_ID
-               AND ENTITY_ID      = due_date_rec.ENTITY_ID
-               AND PAY_ELEMENT_ID = due_date_rec.PAY_EL_ID
-               AND LEGAL_DUE_DATE = v_due_date
-               AND LEGAL_DUE_DATE_ID = due_date_rec.ID
-               AND IS_GPAT_SOURCE = 'Y';
-            IF v_exists = 0 THEN
-              INSERT INTO GTC_PAYMENTS (
-                PAYEE_ID,
-                COUNTRY_ID,
-                ENTITY_ID,
-                PAY_ELEMENT_ID,
-                LEGAL_DUE_DATE,
-                LEGAL_DUE_DATE_ID,
-                IS_GPAT_SOURCE
-              )
-              VALUES (
-                due_date_rec.PAYMENT_TYPE_ID,
-                due_date_rec.COUNTRY_ID,
-                due_date_rec.ENTITY_ID,
-                due_date_rec.PAY_EL_ID,
-                v_due_date,
-                due_date_rec.ID,
-                'Y'
-              );
-            END IF;
-          EXCEPTION
-            WHEN OTHERS THEN
-              NULL;  -- or log error if needed
-          END;
-
+		  
+		  -- Insert first semi-monthly due date (15th or adjusted) if not already inserted.
+		  BEGIN
+		  	SELECT COUNT(*) INTO v_exists FROM GTC_PAYMENTS
+		  	WHERE PAYEE_ID       = due_date_rec.PAYMENT_TYPE_ID
+		  	AND COUNTRY_ID     = due_date_rec.COUNTRY_ID
+		  	AND ENTITY_ID      = due_date_rec.ENTITY_ID
+		  	AND PAY_ELEMENT_ID = due_date_rec.PAY_EL_ID
+		  	AND LEGAL_DUE_DATE = v_due_date
+		  	AND LEGAL_DUE_DATE_ID = due_date_rec.ID
+		  	AND IS_GPAT_SOURCE = 'Y';
+		  	IF v_exists = 0 THEN
+		  	INSERT INTO GTC_PAYMENTS (
+		  		PAYEE_ID,
+		  		COUNTRY_ID,
+		  		ENTITY_ID,
+		  		PAY_ELEMENT_ID,
+		  		LEGAL_DUE_DATE,
+		  		LEGAL_DUE_DATE_ID,
+		  		IS_GPAT_SOURCE
+		  	)
+		  	VALUES (
+		  		due_date_rec.PAYMENT_TYPE_ID,
+		  		due_date_rec.COUNTRY_ID,
+		  		due_date_rec.ENTITY_ID,
+		  		due_date_rec.PAY_EL_ID,
+		  		v_due_date,
+		  		due_date_rec.ID,
+		  		'Y'
+		  	);
+		  	END IF;
+		  EXCEPTION
+		  	WHEN OTHERS THEN
+		  	NULL;  -- or log error if needed
+		  END;
+		  
           -- Adjust the second due date for holidays/weekends.
           LOOP
             DECLARE
@@ -512,40 +527,40 @@ BEGIN
             END;
           END LOOP;
 
-          -- Insert second semi-monthly due date (last day or adjusted) if not already inserted.
-          BEGIN
-            SELECT COUNT(*) INTO v_exists FROM GTC_PAYMENTS
-             WHERE PAYEE_ID       = due_date_rec.PAYMENT_TYPE_ID
-               AND COUNTRY_ID     = due_date_rec.COUNTRY_ID
-               AND ENTITY_ID      = due_date_rec.ENTITY_ID
-               AND PAY_ELEMENT_ID = due_date_rec.PAY_EL_ID
-               AND LEGAL_DUE_DATE = v_due_date_2
-               AND LEGAL_DUE_DATE_ID = due_date_rec.ID
-               AND IS_GPAT_SOURCE = 'Y';
-            IF v_exists = 0 THEN
-              INSERT INTO GTC_PAYMENTS (
-                PAYEE_ID,
-                COUNTRY_ID,
-                ENTITY_ID,
-                PAY_ELEMENT_ID,
-                LEGAL_DUE_DATE,
-                LEGAL_DUE_DATE_ID,
-                IS_GPAT_SOURCE
-              )
-              VALUES (
-                due_date_rec.PAYMENT_TYPE_ID,
-                due_date_rec.COUNTRY_ID,
-                due_date_rec.ENTITY_ID,
-                due_date_rec.PAY_EL_ID,
-                v_due_date_2,
-                due_date_rec.ID,
-                'Y'
-              );
-            END IF;
-          EXCEPTION
-            WHEN OTHERS THEN
-              NULL;  -- or log error if needed
-          END;
+		  -- Insert second semi-monthly due date (last day or adjusted) if not already inserted.
+		  BEGIN
+		  	SELECT COUNT(*) INTO v_exists FROM GTC_PAYMENTS
+		  	WHERE PAYEE_ID       = due_date_rec.PAYMENT_TYPE_ID
+		  	AND COUNTRY_ID     = due_date_rec.COUNTRY_ID
+		  	AND ENTITY_ID      = due_date_rec.ENTITY_ID
+		  	AND PAY_ELEMENT_ID = due_date_rec.PAY_EL_ID
+		  	AND LEGAL_DUE_DATE = v_due_date_2
+		  	AND LEGAL_DUE_DATE_ID = due_date_rec.ID
+		  	AND IS_GPAT_SOURCE = 'Y';
+		  	IF v_exists = 0 THEN
+		  	INSERT INTO GTC_PAYMENTS (
+		  		PAYEE_ID,
+		  		COUNTRY_ID,
+		  		ENTITY_ID,
+		  		PAY_ELEMENT_ID,
+		  		LEGAL_DUE_DATE,
+		  		LEGAL_DUE_DATE_ID,
+		  		IS_GPAT_SOURCE
+		  	)
+		  	VALUES (
+		  		due_date_rec.PAYMENT_TYPE_ID,
+		  		due_date_rec.COUNTRY_ID,
+		  		due_date_rec.ENTITY_ID,
+		  		due_date_rec.PAY_EL_ID,
+		  		v_due_date_2,
+		  		due_date_rec.ID,
+		  		'Y'
+		  	);
+		  	END IF;
+		  EXCEPTION
+		  	WHEN OTHERS THEN
+		  	NULL;  -- or log error if needed
+		  END;
         END LOOP;
 
       ELSE
@@ -553,6 +568,12 @@ BEGIN
         FOR i IN 0 .. (12 / due_date_rec.DUEDATE_PERIOD) - 1 LOOP
           v_due_date := ADD_MONTHS(v_base_date, i * due_date_rec.DUEDATE_PERIOD) 
                         + NVL(due_date_rec.DAY_RELATION, 0);
+						
+		--if due date is greater than to date then exit
+		EXIT WHEN v_due_date > v_end_date;
+		 --if due date is less than start date then skip that month
+		CONTINUE WHEN v_due_date < v_start_date;
+		
           LOOP
             DECLARE
               v_holiday_count INTEGER;
@@ -572,39 +593,40 @@ BEGIN
               END IF;
             END;
           END LOOP;
-          BEGIN
-            SELECT COUNT(*) INTO v_exists FROM GTC_PAYMENTS
-             WHERE PAYEE_ID       = due_date_rec.PAYMENT_TYPE_ID
-               AND COUNTRY_ID     = due_date_rec.COUNTRY_ID
-               AND ENTITY_ID      = due_date_rec.ENTITY_ID
-               AND PAY_ELEMENT_ID = due_date_rec.PAY_EL_ID
-               AND LEGAL_DUE_DATE = v_due_date
-               AND LEGAL_DUE_DATE_ID = due_date_rec.ID
-               AND IS_GPAT_SOURCE = 'Y';
-            IF v_exists = 0 THEN
-              INSERT INTO GTC_PAYMENTS (
-                PAYEE_ID,
-                COUNTRY_ID,
-                ENTITY_ID,
-                PAY_ELEMENT_ID,
-                LEGAL_DUE_DATE,
-                LEGAL_DUE_DATE_ID,
-                IS_GPAT_SOURCE
-              )
-              VALUES (
-                due_date_rec.PAYMENT_TYPE_ID,
-                due_date_rec.COUNTRY_ID,
-                due_date_rec.ENTITY_ID,
-                due_date_rec.PAY_EL_ID,
-                v_due_date,
-                due_date_rec.ID,
-                'Y'
-              );
-            END IF;
-          EXCEPTION
-            WHEN OTHERS THEN
-              NULL;
-          END;
+		  
+		  BEGIN
+		  	SELECT COUNT(*) INTO v_exists FROM GTC_PAYMENTS
+		  	WHERE PAYEE_ID       = due_date_rec.PAYMENT_TYPE_ID
+		  	AND COUNTRY_ID     = due_date_rec.COUNTRY_ID
+		  	AND ENTITY_ID      = due_date_rec.ENTITY_ID
+		  	AND PAY_ELEMENT_ID = due_date_rec.PAY_EL_ID
+		  	AND LEGAL_DUE_DATE = v_due_date
+		  	AND LEGAL_DUE_DATE_ID = due_date_rec.ID
+		  	AND IS_GPAT_SOURCE = 'Y';
+		  	IF v_exists = 0 THEN
+		  	INSERT INTO GTC_PAYMENTS (
+		  		PAYEE_ID,
+		  		COUNTRY_ID,
+		  		ENTITY_ID,
+		  		PAY_ELEMENT_ID,
+		  		LEGAL_DUE_DATE,
+		  		LEGAL_DUE_DATE_ID,
+		  		IS_GPAT_SOURCE
+		  	)
+		  	VALUES (
+		  		due_date_rec.PAYMENT_TYPE_ID,
+		  		due_date_rec.COUNTRY_ID,
+		  		due_date_rec.ENTITY_ID,
+		  		due_date_rec.PAY_EL_ID,
+		  		v_due_date,
+		  		due_date_rec.ID,
+		  		'Y'
+		  	);
+		  	END IF;
+		  EXCEPTION
+		  	WHEN OTHERS THEN
+		  	NULL;
+		  END;
         END LOOP;
       END IF;
 
@@ -620,6 +642,11 @@ BEGIN
           v_due_date_2 := LAST_DAY(v_due_date);
           bhu_logs(101, 'v_due_date ' || v_due_date, 'clob101');
           bhu_logs(102, 'v_due_date_2 ' || v_due_date_2, 'clob102');
+		  
+   		  --if due date is greater than to date then exit
+   		  EXIT WHEN v_due_date > v_end_date;
+   		  --if due date is less than start date then skip that month
+   		  CONTINUE WHEN v_due_date < v_start_date;
 
           LOOP
             DECLARE
@@ -738,7 +765,14 @@ BEGIN
             v_due_date := ADD_MONTHS(v_cal_base_date, i * due_date_rec.DUEDATE_PERIOD);
             bhu_logs(102,'v_cal_base_date '||v_cal_base_date,'clob102');
             bhu_logs(103,'v_due_date '||v_due_date,'clob103');
-            LOOP
+			
+			
+		    --if due date is greater than to date then exit
+		    EXIT WHEN v_due_date > v_end_date;
+			--if due date is less than start date then skip that month
+			CONTINUE WHEN v_due_date < v_start_date;
+        
+			LOOP
               DECLARE
                 v_holiday_count INTEGER;
               BEGIN
@@ -804,6 +838,7 @@ EXCEPTION
     ROLLBACK;
     RAISE;
 END INIT_TAX_CALENDAR;
+
 
 ------------------------------------------------
 
