@@ -33,7 +33,7 @@ prompt APPLICATION 23717 - Fondo de Ahorro - Mexico Savings Fund Template (MXSFT
 -- Application Export:
 --   Application:     23717
 --   Name:            Fondo de Ahorro - Mexico Savings Fund Template (MXSFT)
---   Date and Time:   08:59 Tuesday August 11, 2026
+--   Date and Time:   06:02 Thursday August 13, 2026
 --   Exported By:     PRAGYA.KAPOOR@ORACLE.COM
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -134,12 +134,12 @@ wwv_imp_workspace.create_flow(
 ,p_friendly_url=>'N'
 ,p_modernization_available=>'Y'
 ,p_created_on=>wwv_flow_imp.dz('20200901143757Z')
-,p_last_updated_on=>wwv_flow_imp.dz('20260811085723Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20260813060141Z')
 ,p_created_by=>'ANDRAS.A.TOTH@ORACLE.COM'
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 ,p_file_prefix=>nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>21
-,p_version_scn=>'50250519082014'
+,p_version_scn=>'50269675651326'
 ,p_print_server_type=>'INSTANCE'
 ,p_file_storage=>'DB'
 ,p_is_pwa=>'N'
@@ -72782,8 +72782,8 @@ wwv_flow_imp_page.create_page(
 ,p_required_role=>wwv_flow_imp.id(13475788762712480918)
 ,p_page_component_map=>'18'
 ,p_created_on=>wwv_flow_imp.dz('20200901143814Z')
-,p_last_updated_on=>wwv_flow_imp.dz('20191204133144Z')
-,p_last_updated_by=>'ANDRAS.A.TOTH@ORACLE.COM'
+,p_last_updated_on=>wwv_flow_imp.dz('20260813060141Z')
+,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_report_region(
  p_id=>wwv_flow_imp.id(14867892520481572550)
@@ -72803,10 +72803,13 @@ wwv_flow_imp_page.create_report_region(
 ,p_query_row_template=>wwv_flow_imp.id(14225084135705608559)
 ,p_query_num_rows=>500
 ,p_query_options=>'DERIVED_REPORT_COLUMNS'
-,p_csv_output=>'N'
+,p_csv_output=>'Y'
+,p_csv_output_link_text=>'Download'
 ,p_prn_output=>'N'
 ,p_sort_null=>'L'
 ,p_plug_query_strip_html=>'Y'
+,p_updated_on=>wwv_flow_imp.dz('20260813060141Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_report_columns(
  p_id=>wwv_flow_imp.id(14867893376792572559)
