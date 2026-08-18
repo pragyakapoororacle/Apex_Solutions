@@ -37,10 +37,11 @@ Modifications:
 2025.09.11 - 4.1 - Bhuvi Chauhan - Updated the att_update_sp for cases where user edit their prev attachment and upload a replacement (new attachment) for the existing one.
 2025.08.10 - 4.2 - Bhuvi Chauhan - Added migrate_ppm_files_to_sp to move files from PPM to SharePoint
 2025.12.22 - 4.3 - Bhuvi Chauhan - Added Rohit now for APEX Solution as Bhuvi is leaving Oracle
+2026.08.18 - 4.4 - Pragya Kapoor - SR 179445 : Modify procedure reject_bug. If SR is rejected by Director, is not QRC and the requestor is a GPO team member then rejection mail should be sent to all GPO team members including the requestor
 
 */
  
-c_version constant varchar2(5 char) := '4.3';
+c_version constant varchar2(5 char) := '4.4';
  
 function c_INNO_SLACK_CHANNEL return varchar2 deterministic as
 begin
@@ -2102,10 +2103,11 @@ procedure reject_bug(p_id number, p_reason varchar2, p_email varchar2 default v(
 2021.09.10 - 1.9 - András Tóth - adding the Innovation Tracker enhancements
 2021.10.04 - 2.0 - András Tóth - updating notifications
 2025.05.02 - 2.1 - Bhuvi Chauhan - See comment below in is_manager and clause
+2026.08.18 - 2.2 - Pragya Kapoor - if SR is rejected by Director and is not QRC and the requestor is a GPO team member then rejection mail should be sent to all GPO team members including the requestor
 */
   pragma autonomous_transaction;
   c_proc_name constant varchar2(61 char) := c_pkg_name||'.'||'reject_bug';
-  c_proc_version constant varchar2(5 char) := '2.1';
+  c_proc_version constant varchar2(5 char) := '2.2';
   v_status_id number;
   v_employee_email varchar2(256 char);
   v_role varchar2(256 char);
@@ -2333,7 +2335,8 @@ begin
          sendmail(v_team_member_email, v_title, pcg.decode_regexp_replace(v_message_text, '#BUGNUMBER#', get_bug_link_a(p_id), '#COMMENT#', p_reason, '#SRCATEGORY#', sr_category_name(v_issue_type_id)), p_email);
        else -- If the Requestor is the GPO Team Member of the region:
          ret_email_msg ('strong_reject_GPO', v_title, v_message_text);
-         for i in (select email from bugt_team_members_v where v_team_member_email != email) loop
+         for i in (select email from bugt_team_members_v --where v_team_member_email != email
+         ) loop
            sendmail(i.email, v_title, pcg.decode_regexp_replace(v_message_text, '#BUGNUMBER#', get_bug_link_a(p_id), '#COMMENT#', p_reason, '#SRCATEGORY#', sr_category_name(v_issue_type_id)), p_email);
          end loop;
        end if;
