@@ -2,8 +2,9 @@ create or replace package body "AUD_PKG" as
 /**
 2016.01.11 - 1.0 - Rohit Kumar - create package
 2026.08.03 - 1.1 - Pragya Kapoor - Modify the logic for get_director_id. Use pivot instead of nested loop
+2026.08.18 - 1.2 - Pragya Kapoor - Modify the subject of send mail to director : concatenate the quarter
 **/
-c_pkg_version constant varchar2(5 char) := '1.1';
+c_pkg_version constant varchar2(5 char) := '1.2';
 c_pkg_name constant varchar2(30 char) := 'AUD_PKG';
 
 
@@ -11,7 +12,9 @@ procedure send_mail_to_director (
     p_year    in number,
     p_quarter in varchar2
 ) is
-
+/**2026.08.18 - 1.1 - Pragya Kapoor - Modify the subject of email : concatenate the quarter
+**/
+  c_proc_version constant varchar2(5 char) := '1.1';
   cursor c0 is
     select a.director_id,
            a.user_name,
@@ -48,14 +51,14 @@ begin
         case
           when pcg.is_prod_env = pcg.c_yes
           then i.director || ',' ||
-               'anupam.ankesh@oracle.com,milagro.valverde@oracle.com'
+               'anupam.ankesh@oracle.com,milagro.valverde@oracle.com,pragya.kapoor@oracle.com'
           else 'anupam.ankesh@oracle.com'
         end,
         c_application_id,
         case when pcg.is_prod_env = pcg.c_yes then '' else 'TEST ' end || c_application_name,
         p_year,
         p_quarter,
-        'QUARTERLY AUDIT - Payroll Accesses',
+        'QUARTERLY AUDIT - Payroll Accesses (' || p_quarter || ')',
         i.web_template_html
       );
 
@@ -262,7 +265,7 @@ END upload_user_roles_ivacation;
 
 --- as per new config design 
 FUNCTION get_director_id(p_emp_email VARCHAR2) RETURN Number IS
-/**2026.07.31 - 1.6 - Pragya Kapoor - Modify the logic for get_director_id. Use pivot instead of nested loop
+/**2026.07.31 - 1.1 - Pragya Kapoor - Modify the logic for get_director_id. Use pivot instead of nested loop
 **/
   c_proc_version constant varchar2(5 char) := '1.1';
   v_director_id number;
