@@ -8,7 +8,7 @@ c_Workspace_Name constant varchar2(30) := APEX_UTIL.FIND_WORKSPACE(v('WORKSPACE_
 c_Application_ID constant varchar2(10) := v('APP_ID');
 c_Application_Name constant varchar2(100) := 'Audit';
 
-c_pkg_spec_version constant varchar2(5 char) := '1';
+c_pkg_spec_version constant varchar2(5 char) := '1.2';
 c_admin varchar2(64) := 'milagro.valverde@oracle.com' ; 
 
 c_space varchar2(10 char) := '%20'; /* WhiteSpace */

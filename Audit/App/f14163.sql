@@ -19,7 +19,7 @@ whenever sqlerror exit sql.sqlcode rollback
 begin
 wwv_flow_imp.import_begin (
  p_version_yyyy_mm_dd=>'2026.03.30'
-,p_release=>'26.1.2'
+,p_release=>'26.1.3'
 ,p_default_workspace_id=>13457932919518590877
 ,p_default_application_id=>14163
 ,p_default_id_offset=>32857140717394817192
@@ -33,18 +33,18 @@ prompt APPLICATION 14163 - Audit
 -- Application Export:
 --   Application:     14163
 --   Name:            Audit
---   Date and Time:   12:20 Tuesday August 4, 2026
+--   Date and Time:   12:43 Thursday August 20, 2026
 --   Exported By:     PRAGYA.KAPOOR@ORACLE.COM
 --   Flashback:       0
 --   Export Type:     Application Export
 --     Pages:                      9
---       Items:                   18
+--       Items:                   20
 --       Computations:             1
 --       Validations:              1
---       Processes:               26
---       Regions:                 30
---       Buttons:                 14
---       Dynamic Actions:          8
+--       Processes:               27
+--       Regions:                 31
+--       Buttons:                 13
+--       Dynamic Actions:          9
 --     Shared Components:
 --       Logic:
 --         Items:                  4
@@ -66,7 +66,7 @@ prompt APPLICATION 14163 - Audit
 --       E-Mail:
 --     Supporting Objects:  Included
 --       Install scripts:          3
---   Version:         26.1.2
+--   Version:         26.1.3
 --   Instance ID:     63102946836549
 --
 
@@ -110,11 +110,11 @@ wwv_imp_workspace.create_flow(
 ,p_modernization_available=>'Y'
 ,p_substitution_string_01=>'APP_NAME'
 ,p_substitution_value_01=>'Audit'
-,p_last_updated_on=>wwv_flow_imp.dz('20260804121056Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20260820122920Z')
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 ,p_file_prefix=>nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>2461209184649
-,p_version_scn=>'50184711104625'
+,p_version_scn=>'50341702178335'
 ,p_print_server_type=>'INSTANCE'
 ,p_file_storage=>'DB'
 ,p_is_pwa=>'Y'
@@ -1944,17 +1944,50 @@ wwv_flow_imp_page.create_page(
 ,p_required_role=>'MUST_NOT_BE_PUBLIC_USER'
 ,p_deep_linking=>'Y'
 ,p_rejoin_existing_sessions=>'Y'
-,p_page_component_map=>'21'
-,p_last_updated_on=>wwv_flow_imp.dz('20260730111314Z')
+,p_page_component_map=>'25'
+,p_last_updated_on=>wwv_flow_imp.dz('20260820122920Z')
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_plug(
+ p_id=>wwv_flow_imp.id(21162539819437863449)
+,p_plug_name=>'Already submitted'
+,p_static_id=>'already-submitted'
+,p_region_template_options=>'#DEFAULT#:t-Region--noPadding:t-Region--removeHeader js-removeLandmark:t-Region--noUI:t-Region--scrollBody'
+,p_plug_template=>4072358936313175081
+,p_plug_display_sequence=>20
+,p_plug_item_display_point=>'ABOVE'
+,p_location=>null
+,p_function_body_language=>'PLSQL'
+,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'declare',
+'    l_reviewed_on varchar2(100);',
+'begin',
+'    l_reviewed_on := :P2_REVIEWED_ON;',
+'',
+'        return',
+'            ''<div>'' ||',
+'                ''For the selected quarter, you have already submitted your review! '' ||',
+'                    CASE WHEN l_reviewed_on IS NOT NULL THEN ''('' || apex_escape.html(l_reviewed_on) || '')''',
+'                        ELSE NULL END ||',
+'            ''</div>'';',
+'end;'))
+,p_lazy_loading=>false
+,p_plug_source_type=>'NATIVE_DYNAMIC_CONTENT'
+,p_ajax_items_to_submit=>'P2_REVIEWED_ON'
+,p_plug_display_condition_type=>'VAL_OF_ITEM_IN_COND_EQ_COND2'
+,p_plug_display_when_condition=>'P2_VALIDATION_PENDING'
+,p_plug_display_when_cond2=>'0'
+,p_created_on=>wwv_flow_imp.dz('20260820091246Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820122920Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_plug(
  p_id=>wwv_flow_imp.id(34667015618656822228)
 ,p_plug_name=>'Button Region'
 ,p_static_id=>'button-region'
-,p_parent_plug_id=>wwv_flow_imp.id(33723148865112114835)
-,p_escape_on_http_output=>'N'
-,p_plug_display_sequence=>70
+,p_plug_display_sequence=>10
+,p_plug_new_grid_row=>false
 ,p_plug_display_column=>8
 ,p_plug_item_display_point=>'ABOVE'
 ,p_location=>null
@@ -1962,6 +1995,8 @@ wwv_flow_imp_page.create_page_plug(
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
   'expand_shortcuts', 'N',
   'output_as', 'HTML')).to_clob
+,p_updated_on=>wwv_flow_imp.dz('20260820122635Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_plug(
  p_id=>wwv_flow_imp.id(34667013394921822205)
@@ -3801,31 +3836,16 @@ wwv_flow_imp_page.create_page_plug(
 ,p_static_id=>'top'
 ,p_title=>'Audit Report'
 ,p_region_template_options=>'#DEFAULT#:js-showMaximizeButton:t-Region--showIcon:t-Region--removeHeader js-removeLandmark:t-Region--accent1:t-Region--scrollBody:margin-top-none'
-,p_escape_on_http_output=>'N'
 ,p_plug_template=>4072358936313175081
-,p_plug_display_sequence=>40
+,p_plug_display_sequence=>30
 ,p_plug_item_display_point=>'ABOVE'
 ,p_location=>null
 ,p_plug_query_headings_type=>'COLON_DELMITED_LIST'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
   'expand_shortcuts', 'N',
   'output_as', 'HTML')).to_clob
-);
-wwv_flow_imp_page.create_page_button(
- p_id=>wwv_flow_imp.id(33142683243602074422)
-,p_button_sequence=>30
-,p_button_plug_id=>wwv_flow_imp.id(34667015618656822228)
-,p_button_name=>'Apply'
-,p_static_id=>'apply'
-,p_button_action=>'DEFINED_BY_DA'
-,p_button_template_options=>'#DEFAULT#:t-Button--large:t-Button--success:t-Button--iconLeft:t-Button--pillStart:t-Button--padTop:t-Button--padBottom'
-,p_button_template_id=>2082829544945815391
-,p_button_is_hot=>'Y'
-,p_button_image_alt=>'Apply'
-,p_warn_on_unsaved_changes=>null
-,p_icon_css_classes=>'fa-search'
-,p_grid_new_row=>'N'
-,p_grid_column=>10
+,p_updated_on=>wwv_flow_imp.dz('20260820122736Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_button(
  p_id=>wwv_flow_imp.id(33723149402349114840)
@@ -3937,7 +3957,7 @@ wwv_flow_imp_page.create_page_button(
 ,p_button_name=>'send_to_director'
 ,p_static_id=>'send-to-director'
 ,p_button_action=>'SUBMIT'
-,p_button_template_options=>'#DEFAULT#:t-Button--large:t-Button--warning:t-Button--iconLeft:t-Button--pill:t-Button--padLeft:t-Button--padRight:t-Button--padTop:t-Button--padBottom'
+,p_button_template_options=>'#DEFAULT#:t-Button--large:t-Button--warning:t-Button--iconLeft:t-Button--pill:t-Button--stretch:t-Button--padLeft:t-Button--padRight:t-Button--padTop:t-Button--padBottom'
 ,p_button_template_id=>2082829544945815391
 ,p_button_is_hot=>'Y'
 ,p_button_image_alt=>'Send to Director'
@@ -3952,6 +3972,8 @@ unistr('    <strong>\D83D\DDD3\FE0F Quarter:</strong> <span style="color: #28A74
 ,p_grid_new_row=>'N'
 ,p_grid_column=>6
 ,p_security_scheme=>wwv_flow_imp.id(33442335837402780889)
+,p_updated_on=>wwv_flow_imp.dz('20260820122635Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_button(
  p_id=>wwv_flow_imp.id(34064554830020137001)
@@ -3960,13 +3982,17 @@ wwv_flow_imp_page.create_page_button(
 ,p_button_name=>'Submit'
 ,p_static_id=>'submit'
 ,p_button_action=>'SUBMIT'
-,p_button_template_options=>'#DEFAULT#:t-Button--large:t-Button--warning:t-Button--iconLeft:t-Button--pillStart'
+,p_button_template_options=>'#DEFAULT#:t-Button--large:t-Button--warning:t-Button--iconLeft:t-Button--pillStart:t-Button--stretch'
 ,p_button_template_id=>2082829544945815391
 ,p_button_is_hot=>'Y'
 ,p_button_image_alt=>'Submit'
+,p_confirm_message=>'Please click Submit only once, after completing the review for all systems.'
+,p_confirm_style=>'information'
 ,p_grid_new_row=>'Y'
 ,p_grid_column=>6
 ,p_security_scheme=>wwv_flow_imp.id(33442618053640608378)
+,p_updated_on=>wwv_flow_imp.dz('20260820122635Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_button(
  p_id=>wwv_flow_imp.id(33142683895524074428)
@@ -4092,6 +4118,20 @@ wwv_flow_imp_page.create_page_item(
 ,p_updated_by=>'ROHIT.BQ.KUMAR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(21162539632154863447)
+,p_name=>'P2_REVIEWED_ON'
+,p_item_sequence=>60
+,p_item_plug_id=>wwv_flow_imp.id(33723148865112114835)
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'value_protected', 'Y')).to_clob
+,p_created_on=>wwv_flow_imp.dz('20260820091246Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820091246Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(33142683607194074425)
 ,p_name=>'P2_TYPE'
 ,p_item_sequence=>30
@@ -4146,6 +4186,20 @@ wwv_flow_imp_page.create_page_item(
 ,p_updated_by=>'ROHIT.BQ.KUMAR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_item(
+ p_id=>wwv_flow_imp.id(21162539717454863448)
+,p_name=>'P2_VALIDATION_PENDING'
+,p_item_sequence=>70
+,p_item_plug_id=>wwv_flow_imp.id(33723148865112114835)
+,p_source_type=>'ALWAYS_NULL'
+,p_display_as=>'NATIVE_HIDDEN'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'value_protected', 'Y')).to_clob
+,p_created_on=>wwv_flow_imp.dz('20260820091246Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820091246Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(33142681703417074406)
 ,p_name=>'P2_YEAR'
 ,p_item_sequence=>10
@@ -4166,6 +4220,69 @@ wwv_flow_imp_page.create_page_item(
   'page_action_on_selection', 'NONE')).to_clob
 ,p_updated_on=>wwv_flow_imp.dz('20260217144916Z')
 ,p_updated_by=>'ROHIT.BQ.KUMAR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_da_event(
+ p_id=>wwv_flow_imp.id(21162539382705863444)
+,p_name=>'clear type on change of year quarter'
+,p_static_id=>'clear-type-on-change-of-year-quarter'
+,p_event_sequence=>100
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P2_QUARTER,P2_YEAR'
+,p_bind_type=>'bind'
+,p_execution_type=>'IMMEDIATE'
+,p_bind_event_type=>'change'
+,p_created_on=>wwv_flow_imp.dz('20260820090516Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820090516Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_da_action(
+ p_id=>wwv_flow_imp.id(21162539425227863445)
+,p_event_id=>wwv_flow_imp.id(21162539382705863444)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'N'
+,p_static_id=>'native-clear'
+,p_action=>'NATIVE_CLEAR'
+,p_affected_elements_type=>'ITEM'
+,p_affected_elements=>'P2_TYPE'
+,p_created_on=>wwv_flow_imp.dz('20260820090516Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820090516Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_da_event(
+ p_id=>wwv_flow_imp.id(21162539901605863450)
+,p_name=>'Disable submit btn'
+,p_static_id=>'disable-submit-btn'
+,p_event_sequence=>110
+,p_triggering_element_type=>'ITEM'
+,p_triggering_element=>'P2_REVIEWED_ON'
+,p_bind_type=>'bind'
+,p_execution_type=>'IMMEDIATE'
+,p_bind_event_type=>'change'
+,p_created_on=>wwv_flow_imp.dz('20260820091356Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820091356Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_da_action(
+ p_id=>wwv_flow_imp.id(23440541532293694201)
+,p_event_id=>wwv_flow_imp.id(21162539901605863450)
+,p_event_result=>'TRUE'
+,p_action_sequence=>10
+,p_execute_on_page_init=>'Y'
+,p_static_id=>'native-disable'
+,p_action=>'NATIVE_DISABLE'
+,p_affected_elements_type=>'BUTTON'
+,p_affected_button_id=>wwv_flow_imp.id(34064554830020137001)
+,p_client_condition_type=>'EQUALS'
+,p_client_condition_element=>'P2_VALIDATION_PENDING'
+,p_client_condition_expression=>'0'
+,p_created_on=>wwv_flow_imp.dz('20260820091356Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820091356Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_da_event(
  p_id=>wwv_flow_imp.id(34060302859710975093)
@@ -4217,30 +4334,6 @@ wwv_flow_imp_page.create_page_da_action(
 ,p_updated_on=>wwv_flow_imp.dz('20260618142332Z')
 ,p_created_by=>'MAREK.SZWARCZEWSKI@ORACLE.COM'
 ,p_updated_by=>'MAREK.SZWARCZEWSKI@ORACLE.COM'
-);
-wwv_flow_imp_page.create_page_da_event(
- p_id=>wwv_flow_imp.id(33142683416090074423)
-,p_name=>'refresh main'
-,p_static_id=>'refresh-main'
-,p_event_sequence=>10
-,p_triggering_element_type=>'BUTTON'
-,p_triggering_button_id=>wwv_flow_imp.id(33142683243602074422)
-,p_bind_type=>'bind'
-,p_execution_type=>'IMMEDIATE'
-,p_bind_event_type=>'click'
-);
-wwv_flow_imp_page.create_page_da_action(
- p_id=>wwv_flow_imp.id(33441428212943337526)
-,p_event_id=>wwv_flow_imp.id(33142683416090074423)
-,p_event_result=>'TRUE'
-,p_action_sequence=>20
-,p_execute_on_page_init=>'N'
-,p_static_id=>'native-refresh'
-,p_action=>'NATIVE_REFRESH'
-,p_affected_elements_type=>'REGION'
-,p_affected_region_id=>wwv_flow_imp.id(33441426688708337611)
-,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
-  'maintain_pagination', 'N')).to_clob
 );
 wwv_flow_imp_page.create_page_da_event(
  p_id=>wwv_flow_imp.id(34667012844444822200)
@@ -4420,6 +4513,41 @@ wwv_flow_imp_page.create_page_process(
 ,p_internal_uid=>513636685300145647
 ,p_updated_on=>wwv_flow_imp.dz('20260116080518Z')
 ,p_updated_by=>'ROHIT.BQ.KUMAR@ORACLE.COM'
+);
+wwv_flow_imp_page.create_page_process(
+ p_id=>wwv_flow_imp.id(21162539527113863446)
+,p_process_sequence=>10
+,p_process_point=>'BEFORE_HEADER'
+,p_process_type=>'NATIVE_PLSQL'
+,p_process_name=>'Initialization'
+,p_static_id=>'initialization'
+,p_process_sql_clob=>wwv_flow_string.join(wwv_flow_t_varchar2(
+'DECLARE',
+'l_director_id number;',
+'BEGIN',
+'    SELECT id into l_director_id FROM AUD_DIRECTOR WHERE UPPER(DIRECTOR) = UPPER(:APP_USER);',
+'    ',
+'    select to_char(max(reviewed_on),''DD-Mon-YYYY HH:MI AM'')  into :P2_REVIEWED_ON from aud_main',
+'    where financial_year = :P2_YEAR',
+'    and quarter = :P2_QUARTER',
+'    and director_id = l_director_id;',
+'',
+'    IF :P2_YEAR IS NOT NULL AND :P2_QUARTER IS NOT NULL and l_director_id is not null THEN ',
+'        select count(*) into :P2_VALIDATION_PENDING from aud_main',
+'        where financial_year = :P2_YEAR',
+'        and quarter = :P2_QUARTER',
+'        and director_id = l_director_id',
+'        and  status = ''Sent to Director'';',
+'    END IF;',
+'    EXCEPTION WHEN OTHERS',
+'    THEN NULL;',
+'END;'))
+,p_process_clob_language=>'PLSQL'
+,p_internal_uid=>21162539527113863446
+,p_created_on=>wwv_flow_imp.dz('20260820091246Z')
+,p_updated_on=>wwv_flow_imp.dz('20260820095237Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_process(
  p_id=>wwv_flow_imp.id(10921004301909469737)
@@ -4814,7 +4942,8 @@ wwv_flow_imp_page.create_page_process(
 '',
 '-- All good: update status and send mail',
 'update aud_main',
-'set status = ''Reviewed by Director''',
+'set status = ''Reviewed by Director'',',
+'REVIEWED_ON = SYSTIMESTAMP',
 'where financial_year = :P2_YEAR',
 'and quarter = :P2_QUARTER',
 'and director_id = l_director_id;',
@@ -4849,8 +4978,8 @@ wwv_flow_imp_page.create_page_process(
 ,p_process_when_button_id=>wwv_flow_imp.id(34064554830020137001)
 ,p_process_success_message=>'Submitted !'
 ,p_internal_uid=>1207414320436319811
-,p_updated_on=>wwv_flow_imp.dz('20260618082226Z')
-,p_updated_by=>'MAREK.SZWARCZEWSKI@ORACLE.COM'
+,p_updated_on=>wwv_flow_imp.dz('20260820095320Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 end;
 /
@@ -6437,7 +6566,7 @@ wwv_flow_imp_page.create_page(
 ,p_protection_level=>'C'
 ,p_page_component_map=>'21'
 ,p_created_on=>wwv_flow_imp.dz('20260730103549Z')
-,p_last_updated_on=>wwv_flow_imp.dz('20260730110229Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20260819063918Z')
 ,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
@@ -6504,7 +6633,7 @@ wwv_flow_imp_page.create_page_plug(
 ,p_prn_page_footer_alignment=>'CENTER'
 ,p_prn_border_color=>'#666666'
 ,p_created_on=>wwv_flow_imp.dz('20260730103552Z')
-,p_updated_on=>wwv_flow_imp.dz('20260730110142Z')
+,p_updated_on=>wwv_flow_imp.dz('20260819063918Z')
 ,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 ,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
@@ -6654,7 +6783,7 @@ wwv_flow_imp_page.create_interactive_grid(
 ,p_fixed_header_max_height=>500
 ,p_show_icon_view=>false
 ,p_show_detail_view=>false
-,p_updated_on=>wwv_flow_imp.dz('20260730110142Z')
+,p_updated_on=>wwv_flow_imp.dz('20260819063918Z')
 ,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_ig_report(
@@ -6665,7 +6794,7 @@ wwv_flow_imp_page.create_ig_report(
 ,p_default_view=>'GRID'
 ,p_show_row_number=>false
 ,p_settings_area_expanded=>true
-,p_updated_on=>wwv_flow_imp.dz('20260730104306Z')
+,p_updated_on=>wwv_flow_imp.dz('20260819063918Z')
 ,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_ig_report_view(
@@ -6716,6 +6845,9 @@ wwv_flow_imp_page.create_ig_report_column(
 ,p_column_id=>wwv_flow_imp.id(80828800022050)
 ,p_is_visible=>true
 ,p_is_frozen=>false
+,p_sort_order=>1
+,p_sort_direction=>'ASC'
+,p_sort_nulls=>'LAST'
 );
 wwv_flow_imp_page.create_page_item(
  p_id=>wwv_flow_imp.id(80949550022052)
