@@ -5332,7 +5332,7 @@ begin
    where ENVIRONMENT = 'GXPDT';
    */
    l_username      := 'payroll-apex_ww@oracle.com' ;
-   l_password      := '9Wy7j3DTK2vwhWU5' ;
+   l_password      := 'TK2vwhWU59Wy7j3D' ;
    l_client_id     := 'b91c8a1522c345a193485d94d0ef62e7' ;
    l_clinet_secret := '0a0becee-ef12-4f76-b9d7-ddfb68f30a52' ;
    l_token_url     := 'https://idcs-ae5270dfd3df46d9b4ba8427662a3e32.identity.oraclecloud.com/oauth2/v1/token' ;
