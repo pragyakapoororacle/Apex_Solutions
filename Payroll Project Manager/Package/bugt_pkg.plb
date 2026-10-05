@@ -38,10 +38,11 @@ Modifications:
 2025.08.10 - 4.2 - Bhuvi Chauhan - Added migrate_ppm_files_to_sp to move files from PPM to SharePoint
 2025.12.22 - 4.3 - Bhuvi Chauhan - Added Rohit now for APEX Solution as Bhuvi is leaving Oracle
 2026.08.18 - 4.4 - Pragya Kapoor - SR 179445 : Modify procedure reject_bug. If SR is rejected by Director, is not QRC and the requestor is a GPO team member then rejection mail should be sent to all GPO team members including the requestor
+2026.10.05 - 4.5 - Pragya Kapoor - SR 179295: For AOR, removed Maurice and added Milagro.
 
 */
  
-c_version constant varchar2(5 char) := '4.4';
+c_version constant varchar2(5 char) := '4.5';
  
 function c_INNO_SLACK_CHANNEL return varchar2 deterministic as
 begin
@@ -981,6 +982,7 @@ function get_team_member_id_byc(p_country_ids in varchar2, p_system_id in number
 2022.03.08 - 1.4 - András Tóth - Adding GPO Process type to the game.
 2024.12.16 - 1.5 - Bhuvi Chauhan - Adjusting the workflow for APEX, Macros, Automation and Osvc Issues. Now Systems team will act as GOP Team member as will Approve/Reject these SR(s).
 2025.02.26 - 1.5 - Bhuvi Chauhan - Added new system (AoR) for access and added maurice as repsonsible person for that.
+2026.10.05 - 1.6 - Pragya Kapoor - SR 179295: For AOR, removed Maurice and added Milagro.
 */
   c_proc_name constant varchar2(61 char) := c_pkg_name||'.'||'get_team_member_id_byc';
   c_proc_version constant varchar2(5 char) := '1.6';
@@ -1021,9 +1023,9 @@ begin
       v_ln := 8;
       return v_team_member_id;
       --Added AoR and affeced person code for SR 136439
-  elsif v_selected_system_name = 'AoR' then -- Maurice
+  elsif v_selected_system_name = 'AoR' then -- Milagro
   v_ln := 9;
-      return 4126821501;
+      return 1182864176; --SR 179295: Changed from Maurice to Milagro
   elsif v_selected_system_name = 'APEX Solution' then  --bhuvi before, rohit now
     v_ln := 10;
     --return 2535908246;
@@ -1129,6 +1131,8 @@ function get_team_member_id(p_bug_id number) return number deterministic as
 2022.03.08 - 1.4 - András Tóth - adding GPO Process-type.
 2024.12.16 - 1.5 - Bhuvi Chauhan - Adjusting the workflow for APEX, Macros, Automation Production Issues. Now Systems team will act as GOP Team member as will Approve/Reject these SR(s).
 2025.02.26 - 1.5 - Bhuvi Chauhan - Added new system (AoR) for access and added maurice as repsonsible person for that.
+2026.10.05 - 1.6 - Pragya Kapoor - SR 179295: For AOR, removed Maurice and added Milagro.
+
 */
   c_proc_name constant varchar2(61 char) := c_pkg_name||'.'||'get_team_member_id';
   c_proc_version constant varchar2(5 char) := '1.6';
@@ -1173,9 +1177,10 @@ begin
       v_ln := 8;
       return v_team_member_id;
         --Added AoR and affeced person code for SR 136439
-  elsif v_selected_system_name = 'AoR' then -- Maurice
+  elsif v_selected_system_name = 'AoR' then -- Milagro 
   v_ln := 9;
-      return 4126821501;
+      return 1182864176; -- SR 179295: For AOR, removed Maurice and added Milagro.
+
   elsif v_selected_system_name = 'APEX Solution' then  --bhuvi
     v_ln := 10;
     return 2535908246; 
