@@ -27,9 +27,11 @@ Modifications:
 2025.02.25 - 3.1 - Rohit kumar - SR 136240 : Approve request if approval level >= c_max_spec_mgr_level
 2025.11.05 - 3.2 - Rohit kumar - SR 158776 : (approve_request) 'KAREN.LIM@ORACLE.COM' added as an exception for M level approval , request will go to +1 Adrian too for final Approval
 2025.12.23 - 3.3 - Bhuvi Chauhan - Replaced Bhuvi's mail with Marek's mail (Bhuvi Leaving Oracle)
+2026.10.07 - 3.4 - Pragya Kapoor - read_mail procedure: If duplicate emails are triggered by the same person for the same request, the subsequent emails remain unread. Updated the code to mark those duplicate emails as read.
+
 */
  
-c_version constant varchar2(5 char) := '3.3';
+c_version constant varchar2(5 char) := '3.4';
  
 --== SUBROUTINES ==--
  
@@ -1029,10 +1031,11 @@ procedure read_mails is
   2020.05.15 - 1.2 - András Tóth - server access method change
   2021.06.30 - 1.3 - András Tóth - connecting to new email server
   2022.04.08 - 1.4 - András Tóth - enhance logging
+  2026.10.07 - 1.5 - Pragya Kapoor -If duplicate emails are triggered by the same person for the same request, the subsequent emails remain unread. Updated the code to mark those duplicate emails as read.
 */
 pragma autonomous_transaction;
   c_proc_name constant varchar2(61 char) := c_pkg_name||'.'||'read_mails';
-  c_proc_version constant varchar2(5 char) := '1.4';
+  c_proc_version constant varchar2(5 char) := '1.5';
   v_emails_response CLOB;
   v_marking_response CLOB;
   v_cnt number;
@@ -1045,6 +1048,7 @@ pragma autonomous_transaction;
   v_security_number varchar2(4000 char);
   v_msg_id varchar2(4000 char);
   v_ln clob;
+  v_already_actioned NUMBER;
 begin
   -- Read Logs:    select * from pcg_errors where 'eat_pkg.read_mails' = ERROR_SENDER order by 1 desc;
   v_ln := '1';
@@ -1086,28 +1090,45 @@ begin
       v_ln := '12';
       if v_security_number = security_number(v_request_id,v_sender) then
         v_ln := '13';
-        if substr(v_subject,1,6) = 'EAT_A_' then
-          v_ln := '14 - approve_request('||to_char(v_request_id)||', '||v_sender||')';
-          approve_request(v_request_id,v_sender);
-          v_ln := '15';
-        elsif substr(v_subject,1,6) = 'EAT_R_' then
-          v_ln := '16';
-          if v_reason is not null then
-            v_ln := '17';
-            select comments into v_comments from EAT_Requests where id = v_request_id;
-            v_ln := '18';
-            v_comments :=
-            substr(v_comments || '<span style="font-weight: normal;"><b>' ||pcg.email2name(v_sender) || ' (</b><i style="color: #808080;font-weight: lighter;"><small>'||pcg.to_iso8601_datetime(systimestamp)||'</small></i><b>): </b><br><span style="font-weight: lighter;">'|| v_reason ||'</span></span>'||CHR(10)||CHR(13) ,1,4000);
-            v_ln := '19';
-            update EAT_Requests set comments = v_comments where id = v_request_id;
-            v_ln := '20';
-            commit;
-          end if;
-          v_ln := '21 - reject_request('||to_char(v_request_id)||', '||v_sender||')';
-          reject_request(v_request_id,v_sender);
-          v_ln := '22';
-        end if;
-        v_ln := '23';
+		
+		if is_approvable(v_request_id, v_sender) = 'Y' then
+			if substr(v_subject,1,6) = 'EAT_A_' then
+			v_ln := '14 - approve_request('||to_char(v_request_id)||', '||v_sender||')';
+			approve_request(v_request_id,v_sender);
+			v_ln := '15';
+			elsif substr(v_subject,1,6) = 'EAT_R_' then
+			v_ln := '16';
+			if v_reason is not null then
+				v_ln := '17';
+				select comments into v_comments from EAT_Requests where id = v_request_id;
+				v_ln := '18';
+				v_comments :=
+				substr(v_comments || '<span style="font-weight: normal;"><b>' ||pcg.email2name(v_sender) || ' (</b><i style="color: #808080;font-weight: lighter;"><small>'||pcg.to_iso8601_datetime(systimestamp)||'</small></i><b>): </b><br><span style="font-weight: lighter;">'|| v_reason ||'</span></span>'||CHR(10)||CHR(13) ,1,4000);
+				v_ln := '19';
+				update EAT_Requests set comments = v_comments where id = v_request_id;
+				v_ln := '20';
+				commit;
+			end if;
+			v_ln := '21 - reject_request('||to_char(v_request_id)||', '||v_sender||')';
+			reject_request(v_request_id,v_sender);
+			v_ln := '22';
+			end if;
+			v_ln := '23';
+		else
+			-- Only treat it as a duplicate if this sender already actioned it
+			select count(*) into v_already_actioned
+			from EAT_Approvals
+			where request_id = v_request_id
+			and upper(approver) = upper(v_sender)
+			and approval_date is not null and approved_sign in ('Y', 'N');
+		
+			if v_already_actioned > 0 then
+				pcg.log(c_proc_name, c_version, c_proc_version, 'Duplicate email ignored and marked as read. Request ID: ' || v_request_id || ', Sender: ' || v_sender, null, 'D');
+			 else
+				pcg.log(c_proc_name, c_version, c_proc_version, 'You are not authorized to access this object. Request ID: ' || v_request_id || ', Sender: ' || v_sender, null, 'E');
+				raise pcg.not_authorized;
+			end if;
+		end if;
       end if;
  
       v_ln := '24';
@@ -1135,7 +1156,7 @@ exception when others then
 pcg.log(c_proc_name, c_version, c_proc_version, v_ln || ' - '|| case when SQLCODE between -20999 and -20000 then pcg.get_SQLERRM(SQLCODE) else SQLERRM end, SQLCODE, 'E');
 if SQLCODE between -20999 and -20000 then raise_application_error(SQLCODE,pcg.get_SQLERRM(SQLCODE)); else raise; end if;
 end read_mails;
- 
+  
 function security_number(p_request_id in number, p_email in varchar2) return varchar2 deterministic is
 /** Calculates a number out of input data
   2019.02.12 - 1.0 - András Tóth - create
