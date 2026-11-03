@@ -18,8 +18,8 @@ whenever sqlerror exit sql.sqlcode rollback
 --------------------------------------------------------------------------------
 begin
 wwv_flow_imp.import_begin (
- p_version_yyyy_mm_dd=>'2026.03.30'
-,p_release=>'26.1.3'
+ p_version_yyyy_mm_dd=>'2026.04.07'
+,p_release=>'26.2.1'
 ,p_default_workspace_id=>13457932919518590877
 ,p_default_application_id=>14163
 ,p_default_id_offset=>32857140717394817192
@@ -33,7 +33,7 @@ prompt APPLICATION 14163 - Audit
 -- Application Export:
 --   Application:     14163
 --   Name:            Audit
---   Date and Time:   12:43 Thursday August 20, 2026
+--   Date and Time:   18:09 Tuesday November 3, 2026
 --   Exported By:     PRAGYA.KAPOOR@ORACLE.COM
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -66,7 +66,7 @@ prompt APPLICATION 14163 - Audit
 --       E-Mail:
 --     Supporting Objects:  Included
 --       Install scripts:          3
---   Version:         26.1.3
+--   Version:         26.2.1
 --   Instance ID:     63102946836549
 --
 
@@ -110,11 +110,11 @@ wwv_imp_workspace.create_flow(
 ,p_modernization_available=>'Y'
 ,p_substitution_string_01=>'APP_NAME'
 ,p_substitution_value_01=>'Audit'
-,p_last_updated_on=>wwv_flow_imp.dz('20260820122920Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20261103180904Z')
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 ,p_file_prefix=>nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>2461209184649
-,p_version_scn=>'50341702178335'
+,p_version_scn=>'51070081325236'
 ,p_print_server_type=>'INSTANCE'
 ,p_file_storage=>'DB'
 ,p_is_pwa=>'Y'
@@ -234,7 +234,8 @@ wwv_flow_imp_shared.create_plugin_setting(
 ,p_plugin_type=>'REGION TYPE'
 ,p_plugin=>'NATIVE_IR'
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
-  'actions_menu_structure', 'IG')).to_clob
+  'actions_menu_structure', 'IG',
+  'auto_ir_reset_button', 'N')).to_clob
 ,p_version_scn=>'42221196642056'
 );
 wwv_flow_imp_shared.create_plugin_setting(
@@ -1472,7 +1473,6 @@ begin
 wwv_flow_imp_shared.create_flow_item(
  p_id=>wwv_flow_imp.id(33689226835599105653)
 ,p_name=>'QUARTER'
-,p_protection_level=>'N'
 ,p_version_scn=>'44357614161167'
 );
 end;
@@ -1482,7 +1482,6 @@ begin
 wwv_flow_imp_shared.create_flow_item(
  p_id=>wwv_flow_imp.id(33689227110269104551)
 ,p_name=>'SYSTEM_ID'
-,p_protection_level=>'N'
 ,p_version_scn=>'44357614162567'
 );
 end;
@@ -1492,7 +1491,6 @@ begin
 wwv_flow_imp_shared.create_flow_item(
  p_id=>wwv_flow_imp.id(33689711564636840332)
 ,p_name=>'SYSTEM_NAME'
-,p_protection_level=>'N'
 ,p_version_scn=>'44357672076419'
 );
 end;
@@ -1502,7 +1500,6 @@ begin
 wwv_flow_imp_shared.create_flow_item(
  p_id=>wwv_flow_imp.id(33689226632340106508)
 ,p_name=>'YEAR'
-,p_protection_level=>'N'
 ,p_version_scn=>'44357614162610'
 );
 end;
@@ -1945,7 +1942,7 @@ wwv_flow_imp_page.create_page(
 ,p_deep_linking=>'Y'
 ,p_rejoin_existing_sessions=>'Y'
 ,p_page_component_map=>'25'
-,p_last_updated_on=>wwv_flow_imp.dz('20260820122920Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20261103180904Z')
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_plug(
@@ -2151,7 +2148,7 @@ wwv_flow_imp_page.create_page_plug(
 ,p_prn_page_header_alignment=>'CENTER'
 ,p_prn_page_footer_alignment=>'CENTER'
 ,p_prn_border_color=>'#666666'
-,p_updated_on=>wwv_flow_imp.dz('20260730111314Z')
+,p_updated_on=>wwv_flow_imp.dz('20261103180904Z')
 ,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_region_column(
@@ -3427,7 +3424,7 @@ wwv_flow_imp_page.create_region_column(
 ,p_filter_text_case=>'MIXED'
 ,p_filter_exact_match=>true
 ,p_filter_lov_type=>'STATIC'
-,p_filter_lov_query=>'Keep user, Remove user'
+,p_filter_lov_query=>'Keep user,Remove user'
 ,p_use_as_row_header=>false
 ,p_enable_sort_group=>true
 ,p_enable_control_break=>true
@@ -3435,8 +3432,8 @@ wwv_flow_imp_page.create_region_column(
 ,p_is_primary_key=>false
 ,p_duplicate_value=>true
 ,p_include_in_export=>true
-,p_updated_on=>wwv_flow_imp.dz('20260212072500Z')
-,p_updated_by=>'ROHIT.BQ.KUMAR@ORACLE.COM'
+,p_updated_on=>wwv_flow_imp.dz('20261103180904Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_interactive_grid(
  p_id=>wwv_flow_imp.id(33441426806779337612)
