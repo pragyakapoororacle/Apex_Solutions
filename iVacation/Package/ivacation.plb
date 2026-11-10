@@ -1,5 +1,5 @@
 create or replace PACKAGE BODY "IVACATION" as 
-  c_pkg_version constant varchar2(5 char) := '1.1';
+  c_pkg_version constant varchar2(5 char) := '1.2';
   c_pkg_name constant varchar2(30 char) := 'IVACATION';
  
   C_MANAGER_APPROVE_ID number := 1; 
@@ -30,6 +30,7 @@ create or replace PACKAGE BODY "IVACATION" as
 --***************************************** 
 /**
 2026.08.05 - 1.1 - Pragya Kapoor - Modify the logic for GET_AMOUNT_TO_ADD. Do not expire the carryover for employees in AA_EXEMPTED_EMP table
+2026.09.01 - 1.2 - Pragya Kapoor - Send notification when status is changed to Waiting Approval. Made changes to CLEAR_APPROVAL SR 180508
 **/
 function CONSTRUCT_LINK(P_PAGE_ID varchar2, P_CHECKSUM varchar2 default null, P_REQUEST varchar2 default null, P_SET_ARGS varchar2 default null) 
 return varchar2 
@@ -2696,16 +2697,25 @@ end APPROVE_REQUEST_TEMP;
 --***************************************** 
 procedure CLEAR_APPROVAL(P_REQUEST_ID number) 
 is 
- 
+ --2026.09.01 - 1.1 - Pragya Kapoor - Send notification when status is changed to Waiting Approval.  SR 180508
+
   V_EMP_EMAIL             T.EMAIL; 
   V_MONTH                 AA_REQUESTS.LEAVE_END%type; 
   V_STATUS                AA_REQUESTS.AA_STATUS_ID%type; 
   V_AA_COUNTRY_VP_INT_ID  AA_REQUESTS.AA_COUNTRY_VP_INT_ID%type; 
- 
+  L_ID          number;
+  V_EMAIL_TO        AA_REQUESTS.EMAIL_TO%type; 
+  V_EMAIL_CC       AA_REQUESTS.EMAIL_CC%type; 
+  V_EMAIL_BCC        AA_REQUESTS.EMAIL_BCC%type; 
+  V_EMP_NUMBER      AA_EMPLOYEES.EMP_NUMBER%type; 
+  V_NO_WORK_DAYS_LEAVE NUMBER;
+  V_LEAVE_START DATE;
+  V_LEAVE_END DATE;
+  V_EMP_COMMENTS  AA_REQUESTS.EMP_COMMENTS%type;
 begin 
  
-  select AA_STATUS_ID, EMP_EMAIL, LEAVE_END, AA_COUNTRY_VP_INT_ID 
-    into V_STATUS, V_EMP_EMAIL, V_MONTH, V_AA_COUNTRY_VP_INT_ID 
+ select AA_STATUS_ID, EMP_EMAIL, LEAVE_END, AA_COUNTRY_VP_INT_ID, EMAIL_TO, EMP_NUMBER, NO_WORK_DAYS_LEAVE, LEAVE_START, LEAVE_END, EMP_COMMENTS, EMAIL_CC, EMAIL_BCC
+    into V_STATUS, V_EMP_EMAIL, V_MONTH, V_AA_COUNTRY_VP_INT_ID, V_EMAIL_TO, V_EMP_NUMBER, V_NO_WORK_DAYS_LEAVE, V_LEAVE_START, V_LEAVE_END, V_EMP_COMMENTS, V_EMAIL_CC, V_EMAIL_BCC
     from AA_REQUESTS 
     where  AA_REQUEST_ID = P_REQUEST_ID; 
  
@@ -2718,7 +2728,18 @@ begin
     then 
      REDO_BALANCE(V_EMP_EMAIL,V_MONTH,V_AA_COUNTRY_VP_INT_ID); 
   end if; 
- 
+bhu_logs(300110,'300110'||systimestamp,' V_EMAIL_TO '||V_EMAIL_TO ||'P_EMAIL_CC '||V_EMAIL_CC ||' P_EMAIL_BCC '||V_EMAIL_BCC);
+
+  L_ID  := APEX_MAIL.SEND( 
+                             P_TO => (case when WS_TOOLS.is_prod_env = WS_TOOLS.c_Yes then  V_EMAIL_TO else c_default_mail_list end), 
+                             P_CC => (case when WS_TOOLS.is_prod_env = WS_TOOLS.c_Yes then  V_EMAIL_CC else c_default_mail_list end), 
+                             P_BCC => (case when WS_TOOLS.is_prod_env = WS_TOOLS.c_Yes then  V_EMAIL_BCC else c_default_mail_list end),
+                             P_FROM => C_EML_FROM, 
+                             P_BODY => TO_CLOB('Your email client doesn''t support HTML. Please use a client that does. Thank you.'), 
+                             P_BODY_HTML => GET_MANAGER_EMAIL(V_EMAIL_TO, V_EMP_NUMBER, V_NO_WORK_DAYS_LEAVE, V_LEAVE_START, V_LEAVE_END, P_REQUEST_ID,V_EMP_EMAIL, V_EMP_COMMENTS), 
+                             P_SUBJ => 'Approval Required: Annual Leave Template '||V_EMP_EMAIL); 
+    APEX_MAIL.PUSH_QUEUE('mail.oracle.com'); 
+
 end CLEAR_APPROVAL; 
  
  
