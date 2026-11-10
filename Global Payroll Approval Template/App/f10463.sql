@@ -33,7 +33,7 @@ prompt APPLICATION 10463 - Global Payroll Approval Template
 -- Application Export:
 --   Application:     10463
 --   Name:            Global Payroll Approval Template
---   Date and Time:   07:52 Wednesday November 4, 2026
+--   Date and Time:   16:03 Tuesday November 10, 2026
 --   Exported By:     PRAGYA.KAPOOR@ORACLE.COM
 --   Flashback:       0
 --   Export Type:     Application Export
@@ -56,7 +56,7 @@ prompt APPLICATION 10463 - Global Payroll Approval Template
 --           Entries:             33
 --       Security:
 --         Authentication:         3
---         Authorization:         13
+--         Authorization:         14
 --       User Interface:
 --         Themes:                 1
 --         Templates:
@@ -125,11 +125,11 @@ wwv_imp_workspace.create_flow(
 ,p_tokenize_row_search=>'N'
 ,p_friendly_url=>'N'
 ,p_modernization_available=>'Y'
-,p_last_updated_on=>wwv_flow_imp.dz('20261104074126Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20261110160011Z')
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 ,p_file_prefix=>nvl(wwv_flow_application_install.get_static_app_file_prefix,'')
 ,p_files_version=>224
-,p_version_scn=>'51074373315161'
+,p_version_scn=>'51127790878140'
 ,p_print_server_type=>'INSTANCE'
 ,p_file_storage=>'DB'
 ,p_is_pwa=>'N'
@@ -19567,9 +19567,9 @@ wwv_flow_imp_shared.create_list(
  p_id=>wwv_flow_imp.id(80825650230243570697)
 ,p_name=>'Desktop Navigation Menu'
 ,p_static_id=>'desktop-navigation-menu'
-,p_version_scn=>'45684396739260'
-,p_updated_on=>wwv_flow_imp.dz('20251015072350Z')
-,p_updated_by=>'ROHIT.BQ.KUMAR@ORACLE.COM'
+,p_version_scn=>'SH256:JDhPXmhwNZZR-NwANQNOPuogx-gd_n9k2S15fLzbzbc'
+,p_updated_on=>wwv_flow_imp.dz('20261110155437Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_shared.create_list_item(
  p_id=>wwv_flow_imp.id(80825688820174570612)
@@ -19657,9 +19657,11 @@ wwv_flow_imp_shared.create_list_item(
 ,p_static_id=>'configuration'
 ,p_list_item_link_target=>'f?p=&APP_ID.:10:&SESSION.::&DEBUG.::::'
 ,p_list_item_icon=>'fa-wrench'
-,p_security_scheme=>wwv_flow_imp.id(47048570556580607081)
+,p_security_scheme=>wwv_flow_imp.id(9042901495814883291)
 ,p_list_item_current_type=>'COLON_DELIMITED_PAGE_LIST'
 ,p_list_item_current_for_pages=>'10'
+,p_updated_on=>wwv_flow_imp.dz('20261110155403Z')
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_shared.create_list_item(
  p_id=>wwv_flow_imp.id(80825686419573570616)
@@ -19840,9 +19842,9 @@ wwv_flow_imp_shared.create_list_item(
 ,p_list_item_link_target=>'f?p=&APP_ID.:420:&SESSION.::&DEBUG.::::'
 ,p_list_item_icon=>'fa-calendar-wrench'
 ,p_parent_list_item_id=>wwv_flow_imp.id(80825686012215570617)
-,p_security_scheme=>wwv_flow_imp.id(47048570556580607081)
+,p_security_scheme=>wwv_flow_imp.id(9042901495814883291)
 ,p_list_item_current_type=>'TARGET_PAGE'
-,p_updated_on=>wwv_flow_imp.dz('20261104073132Z')
+,p_updated_on=>wwv_flow_imp.dz('20261110155437Z')
 ,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_shared.create_list_item(
@@ -19853,10 +19855,10 @@ wwv_flow_imp_shared.create_list_item(
 ,p_list_item_link_target=>'f?p=&APP_ID.:142:&SESSION.::&DEBUG.::::'
 ,p_list_item_icon=>'fa-list-ul'
 ,p_parent_list_item_id=>wwv_flow_imp.id(80825686012215570617)
-,p_security_scheme=>wwv_flow_imp.id(47048570556580607081)
+,p_security_scheme=>wwv_flow_imp.id(9042901495814883291)
 ,p_list_item_current_type=>'COLON_DELIMITED_PAGE_LIST'
 ,p_list_item_current_for_pages=>'142'
-,p_updated_on=>wwv_flow_imp.dz('20261104073032Z')
+,p_updated_on=>wwv_flow_imp.dz('20261110155420Z')
 ,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_shared.create_list_item(
@@ -152079,6 +152081,28 @@ wwv_flow_imp_shared.create_security_scheme(
 );
 end;
 /
+prompt --application/shared_components/security/authorizations/is_8_gpo_pan_sup_app
+begin
+wwv_flow_imp_shared.create_security_scheme(
+ p_id=>wwv_flow_imp.id(9042901495814883291)
+,p_name=>'Is_8_GPO_PAN_SUP_APP'
+,p_static_id=>'is-8-gpo-pan-sup-app'
+,p_scheme_type=>'NATIVE_EXISTS'
+,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
+  'sql_query', wwv_flow_string.join(wwv_flow_t_varchar2(
+    'select 1',
+    '  from MD_USERS_V u',
+    ' where upper( u.USERNAME ) = upper( :APP_USER )',
+    '   and u.ROLE IN (''OPERATIONS_ANALYST'',''OPERATIONS_MANAGER'',''ANALYST'', ''APPROVER'', ''SUPPORT'', ''ADMINISTRATOR'' )')))).to_clob
+,p_version_scn=>'SH256:Iu3js9s-kVBp229eWmrAM_vQmWQ28Hgfi9DzI8UUxyQ'
+,p_caching=>'BY_USER_BY_SESSION'
+,p_created_on=>wwv_flow_imp.dz('20261110155320Z')
+,p_updated_on=>wwv_flow_imp.dz('20261110155320Z')
+,p_created_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
+);
+end;
+/
 prompt --application/shared_components/security/authorizations/is_admin
 begin
 wwv_flow_imp_shared.create_security_scheme(
@@ -167740,11 +167764,11 @@ wwv_flow_imp_shared.create_authentication(
 ,p_logout_url=>'https://apex.oraclecorp.com/pls/apex/f?p=22969'
 ,p_use_secure_cookie_yn=>'N'
 ,p_ras_mode=>0
-,p_version_scn=>'1'
+,p_version_scn=>'SH256:b6rehVEfD5-BnT9F0w9EzMWvptpuE7wEJkxWLtmYN1A'
 ,p_created_on=>wwv_flow_imp.dz('20250930101146Z')
-,p_updated_on=>wwv_flow_imp.dz('20250930101146Z')
+,p_updated_on=>wwv_flow_imp.dz('20261110160011Z')
 ,p_created_by=>'BHUVI.CHAUHAN@ORACLE.COM'
-,p_updated_by=>'BHUVI.CHAUHAN@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 end;
 /
@@ -167757,11 +167781,11 @@ wwv_flow_imp_shared.create_authentication(
 ,p_scheme_type=>'NATIVE_OPEN_DOOR'
 ,p_use_secure_cookie_yn=>'N'
 ,p_ras_mode=>0
-,p_version_scn=>'45559047684057'
+,p_version_scn=>'SH256:0NDPynk9E3uOTRw2PNjeyfSNd_Jn3_V-j5jSv8x3tTc'
 ,p_created_on=>wwv_flow_imp.dz('20250930101146Z')
-,p_updated_on=>wwv_flow_imp.dz('20250930101146Z')
+,p_updated_on=>wwv_flow_imp.dz('20261110155955Z')
 ,p_created_by=>'BHUVI.CHAUHAN@ORACLE.COM'
-,p_updated_by=>'BHUVI.CHAUHAN@ORACLE.COM'
+,p_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 end;
 /
@@ -173457,8 +173481,10 @@ wwv_flow_imp_page.create_page(
 ,p_autocomplete_on_off=>'OFF'
 ,p_step_template=>wwv_flow_imp.id(103380927108740099334)
 ,p_page_template_options=>'#DEFAULT#'
-,p_required_role=>wwv_flow_imp.id(84740007012163849096)
+,p_required_role=>wwv_flow_imp.id(9042901495814883291)
 ,p_page_component_map=>'06'
+,p_last_updated_on=>wwv_flow_imp.dz('20261110155825Z')
+,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_plug(
  p_id=>wwv_flow_imp.id(84421073480645426949)
@@ -206173,7 +206199,7 @@ wwv_flow_imp_page.create_page(
 ''))
 ,p_step_template=>wwv_flow_imp.id(103380927108740099334)
 ,p_page_template_options=>'#DEFAULT#'
-,p_required_role=>wwv_flow_imp.id(47048570556580607081)
+,p_required_role=>wwv_flow_imp.id(9042901495814883291)
 ,p_page_comment=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'function validateElementName(grid, record) {',
 '    var elementName = record[6];',
@@ -206207,6 +206233,8 @@ wwv_flow_imp_page.create_page(
 '    return validateElementName(grid, record);',
 '}'))
 ,p_page_component_map=>'21'
+,p_last_updated_on=>wwv_flow_imp.dz('20261110155842Z')
+,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_plug(
  p_id=>wwv_flow_imp.id(84712042577588955304)
@@ -242955,7 +242983,7 @@ wwv_flow_imp_page.create_page(
 ''))
 ,p_step_template=>wwv_flow_imp.id(103380927108740099334)
 ,p_page_template_options=>'#DEFAULT#'
-,p_required_role=>wwv_flow_imp.id(47048570556580607081)
+,p_required_role=>wwv_flow_imp.id(9042901495814883291)
 ,p_page_comment=>wwv_flow_string.join(wwv_flow_t_varchar2(
 'function validateElementName(grid, record) {',
 '    var elementName = record[6];',
@@ -242989,7 +243017,7 @@ wwv_flow_imp_page.create_page(
 '    return validateElementName(grid, record);',
 '}'))
 ,p_page_component_map=>'21'
-,p_last_updated_on=>wwv_flow_imp.dz('20261030092453Z')
+,p_last_updated_on=>wwv_flow_imp.dz('20261110155901Z')
 ,p_last_updated_by=>'PRAGYA.KAPOOR@ORACLE.COM'
 );
 wwv_flow_imp_page.create_page_plug(
